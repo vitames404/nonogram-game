@@ -5,7 +5,12 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}", // Include all subfolders and relevant file types
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        openSans: ['"Open Sans"', 'sans-serif'],
+        silkscreen: ['"Silkscreen"', 'cursive'],
+      },
+    },
   },
   plugins: [],
 }
