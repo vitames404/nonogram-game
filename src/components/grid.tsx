@@ -124,7 +124,7 @@ const Grid = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-800">
+    <div className="flex items-center justify-center min-h-screen bg-gray-900">
       <div>
         {/* Column Hints */}
         <div className="grid py-3 grid-cols-5 ml-[45px] gap-1 w-[400px]">
