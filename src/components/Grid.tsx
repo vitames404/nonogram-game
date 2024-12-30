@@ -1,110 +1,63 @@
 import React, { useState, useEffect } from "react";
 
-const Grid = () => {
-  const [grid, setGrid] = useState<number[][]>([]);
+interface GridProps {
+  grid: number[][];
+  rowHints: number[][];
+  colHints: number[][];
+}
+
+const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints }) => {
   const [answerGrid, setAnswerGrid] = useState<number[][]>([]);
-  const [rowHints, setRowHints] = useState<number[][]>([]);
-  const [colHints, setColHints] = useState<number[][]>([]);
 
-  // Create the grids when the component is mounted
   useEffect(() => {
-    const newGrid = create_grid(5); // Create a 5x5 grid (answer grid)
-    const emptyGrid = create_empty_grid(5); // Create a 5x5 empty grid
-
-    setGrid(newGrid);
-    setAnswerGrid(emptyGrid);
-
-    // Generate hints for the grid
-    const { rowHints, colHints } = generateHints(newGrid);
-    setRowHints(rowHints);
-    setColHints(colHints);
-  }, []);
+    // Initialize the answer grid as an empty grid whenever the main grid changes
+    setAnswerGrid(createEmptyGrid(grid.length));
+  }, [grid]);
 
   // Create an empty grid with 0 values
-  function create_empty_grid(size: number): number[][] {
+  const createEmptyGrid = (size: number): number[][] => {
     return Array.from({ length: size }, () =>
       Array.from({ length: size }, () => 0)
     );
-  }
+  };
 
-  // Create a random grid (answer grid)
-  function create_grid(size: number): number[][] {
-    return Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => (Math.random() < 0.5 ? 0 : 1))
-    );
-  }
-
-  // Function to handle cell click
+  // Handle cell click
   const handleCellClick = (rowIndex: number, cellIndex: number) => {
-    // Create the updated grid
     const newAnswerGrid = answerGrid.map((row, rIndex) =>
       row.map((cell, cIndex) => {
         if (rIndex === rowIndex && cIndex === cellIndex) {
-          return cell < 2 ? cell + 1 : 0; // Cycle through 0 -> 1 -> 2 -> 0
+          return (cell + 1) % 3; // Cycle through 0 -> 1 -> 2 -> 0
         }
         return cell;
       })
     );
 
-    // Update the state
     setAnswerGrid(newAnswerGrid);
 
-    // Log the result
     if (checkWin(newAnswerGrid)) {
-      console.log("WIN!!!");
+      alert("You win!");
     } else {
-      console.log("Not yet correct, keep trying!");
+      console.log("Not correct yet. Keep trying!");
     }
   };
 
-  // Check if the new grid matches the correct grid
+  // Check if the current answer grid matches the main grid
   const checkWin = (currentGrid: number[][]): boolean => {
     return grid.every((row, rowIndex) =>
       row.every((cell, cellIndex) => {
         if (cell === 1) {
-          return currentGrid[rowIndex][cellIndex] === 1; // Check if grid has a 1 where answerGrid has a 1
+          return currentGrid[rowIndex][cellIndex] === 1; // Match filled cells
         }
-        return true; // Ignore other values
+        return true; // Ignore empty cells
       })
     );
   };
 
-  // Generate hints for rows and columns
-  function generateHints(grid: number[][]) {
-    function calculateHints(line: number[]) {
-      const hints = [];
-      let count = 0;
-
-      for (const cell of line) {
-        if (cell === 1) {
-          count += 1; // Count consecutive 1's
-        } else if (count > 0) {
-          hints.push(count); // Add the count to hints
-          count = 0;
-        }
-      }
-
-      if (count > 0) {
-        hints.push(count); // Add the last group if it ends with 1's
-      }
-
-      return hints.length > 0 ? hints : [0]; // Return [0] if no 1's are found
-    }
-
-    const rowHints = grid.map((row) => calculateHints(row));
-
-    const colHints = grid[0].map((_, colIndex) =>
-      calculateHints(grid.map((row) => row[colIndex]))
-    );
-
-    return { rowHints, colHints };
-  }
-
   return (
-    <div>
+    <div className="font-vt323">
       <div>
         {/* Column Hints */}
-        <div className="grid py-3 grid-cols-5 ml-[45px] gap-1 w-[400px]">
+        <div className="grid py-3 grid-cols-5 ml-[70px] h-[120px]">
           {colHints.map((hint, colIndex) => (
             <div
               key={colIndex}
