@@ -4,10 +4,12 @@ interface GridProps {
   grid: number[][];
   rowHints: number[][];
   colHints: number[][];
+  calculateHints: (grid: number[][]) => { rowHints: number[][]; colHints: number[][] };
 }
 
-const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints }) => {
+const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints, calculateHints }) => {
   const [answerGrid, setAnswerGrid] = useState<number[][]>([]);
+  const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
 
   useEffect(() => {
     // Initialize the answer grid as an empty grid whenever the main grid changes
@@ -21,8 +23,8 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints }) => {
     );
   };
 
-  // Handle cell click
-  const handleCellClick = (rowIndex: number, cellIndex: number) => {
+  // Handle cell click (marking the cell)
+  const markCell = (rowIndex: number, cellIndex: number) => {
     const newAnswerGrid = answerGrid.map((row, rIndex) =>
       row.map((cell, cIndex) => {
         if (rIndex === rowIndex && cIndex === cellIndex) {
@@ -41,15 +43,15 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints }) => {
     }
   };
 
-  // Check if the current answer grid matches the main grid
+  // Check if the player's grid satisfies the hints
   const checkWin = (currentGrid: number[][]): boolean => {
-    return grid.every((row, rowIndex) =>
-      row.every((cell, cellIndex) => {
-        if (cell === 1) {
-          return currentGrid[rowIndex][cellIndex] === 1; // Match filled cells
-        }
-        return true; // Ignore empty cells
-      })
+    const { rowHints: calculatedRowHints, colHints: calculatedColHints } =
+      calculateHints(currentGrid);
+
+    // Compare calculated hints with original hints
+    return (
+      JSON.stringify(calculatedRowHints) === JSON.stringify(rowHints) &&
+      JSON.stringify(calculatedColHints) === JSON.stringify(colHints)
     );
   };
 
@@ -57,7 +59,7 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints }) => {
     <div className="font-vt323">
       <div>
         {/* Column Hints */}
-        <div className="grid py-3 grid-cols-5 ml-[70px] h-[120px]">
+        <div className="grid py-3 grid-cols-5 ml-[70px] h-[120px]" style={{ userSelect:"none" }}>
           {colHints.map((hint, colIndex) => (
             <div
               key={colIndex}
@@ -74,7 +76,7 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints }) => {
 
         <div className="flex">
           {/* Row Hints */}
-          <div className="grid grid-rows-5 text-white mr-4">
+          <div className="grid grid-rows-5 text-white mr-4" style={{ userSelect:"none" }}>
             {rowHints.map((hint, rowIndex) => (
               <div
                 key={rowIndex}
@@ -94,12 +96,22 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints }) => {
               width: "400px",
               height: "400px",
             }}
+            onMouseLeave={() => setIsMouseDown(false)} // Reset when mouse leaves the grid
           >
             {answerGrid.map((row, rowIndex) =>
               row.map((cell, cellIndex) => (
                 <div
                   key={`${rowIndex}-${cellIndex}`}
-                  onClick={() => handleCellClick(rowIndex, cellIndex)}
+                  onMouseDown={() => {
+                    setIsMouseDown(true);
+                    markCell(rowIndex, cellIndex);
+                  }}
+                  onMouseEnter={() => {
+                    if (isMouseDown) {
+                      markCell(rowIndex, cellIndex);
+                    }
+                  }}
+                  onMouseUp={() => setIsMouseDown(false)} // Reset on mouse up
                   className={`cursor-pointer w-full h-full border border-gray-700 ${
                     cell === 0
                       ? "bg-white"

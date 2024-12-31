@@ -20,16 +20,13 @@ const App: React.FC = () => {
     const newGrid = createGrid(5); // Generate a new 5x5 grid
     setGrid(newGrid);
 
-    const { rowHints, colHints } = generateHints(newGrid);
+    const { rowHints, colHints } = calculateHints(newGrid);
     setRowHints(rowHints);
     setColHints(colHints);
 
     // Add a function that resets the Timer
-    // restartTimer();
     setResetTimer(true);
   };
-
-  
 
   // Create a random grid (answer grid)
   const createGrid = (size: number): number[][] => {
@@ -39,9 +36,9 @@ const App: React.FC = () => {
   };
 
   // Generate hints for rows and columns
-  const generateHints = (grid: number[][]) => {
-    function calculateHints(line: number[]) {
-      const hints = [];
+  const calculateHints = (grid: number[][]) => {
+    const calculateLineHints = (line: number[]) => {
+      const hints: number[] = [];
       let count = 0;
 
       for (const cell of line) {
@@ -58,11 +55,11 @@ const App: React.FC = () => {
       }
 
       return hints.length > 0 ? hints : [0]; // Return [0] if no 1's are found
-    }
+    };
 
-    const rowHints = grid.map((row) => calculateHints(row));
+    const rowHints = grid.map((row) => calculateLineHints(row));
     const colHints = grid[0].map((_, colIndex) =>
-      calculateHints(grid.map((row) => row[colIndex]))
+      calculateLineHints(grid.map((row) => row[colIndex]))
     );
 
     return { rowHints, colHints };
@@ -73,11 +70,15 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="relative flex flex-col items-center gap-4">
           {/* Timer */}
-         
           <Timer resetTimer={resetTimer} onResetComplete={() => setResetTimer(false)} />
             
           {/* Grid */}
-          <Grid grid={grid} rowHints={rowHints} colHints={colHints} />
+          <Grid
+            grid={grid}
+            rowHints={rowHints}
+            colHints={colHints}
+            calculateHints={calculateHints} // Pass the calculateHints function as a prop
+          />
 
           {/* Buttons */}
           <div className="flex gap-2 mt-4">
