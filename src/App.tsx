@@ -3,6 +3,10 @@ import Grid from "./components/Grid.tsx";
 import Buttons from "./components/Buttons.tsx";
 import Timer from "./components/Timer.tsx";
 
+import Login from "./pages/Login.tsx";
+
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 const App: React.FC = () => {
   const [grid, setGrid] = useState<number[][]>([]);
   const [rowHints, setRowHints] = useState<number[][]>([]);
@@ -66,27 +70,37 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className="relative flex flex-col items-center gap-4">
-          {/* Timer */}
-          <Timer resetTimer={resetTimer} onResetComplete={() => setResetTimer(false)} />
-            
-          {/* Grid */}
-          <Grid
-            grid={grid}
-            rowHints={rowHints}
-            colHints={colHints}
-            calculateHints={calculateHints} // Pass the calculateHints function as a prop
-          />
+    <Router>
+      <Routes>
+        <Route path="/" 
+        element=
+        {
+          <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+            <main className="flex-1 flex flex-col items-center justify-center p-4">
+              <div className="relative flex flex-col items-center gap-4">
+                {/* Timer */}
+                <Timer resetTimer={resetTimer} onResetComplete={() => setResetTimer(false)} />
+                  
+                {/* Grid */}
+                <Grid
+                  grid={grid}
+                  rowHints={rowHints}
+                  colHints={colHints}
+                  calculateHints={calculateHints} // Pass the calculateHints function as a prop
+                />
 
-          {/* Buttons */}
-          <div className="flex gap-2 mt-4">
-            <Buttons onClick={generateGame} />
+                {/* Buttons */}
+                <div className="flex gap-2 mt-4">
+                  <Buttons onClick={generateGame} />
+                </div>
+              </div>
+            </main>
           </div>
-        </div>
-      </main>
-    </div>
+        }
+        />
+        <Route path="/home" element={<Login/>}/>
+      </Routes>
+    </Router>
   );
 };
 
