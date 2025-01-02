@@ -56,10 +56,10 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints, calculateHints })
   };
 
   return (
-    <div className="font-vt323">
+    <div className="font-vt323 mr-[120px]">
       <div>
         {/* Column Hints */}
-        <div className="grid py-3 grid-cols-5 ml-[70px] h-[120px]" style={{ userSelect:"none" }}>
+        <div className="grid py-3 grid-cols-5 ml-[110px] h-[120px]" style={{ userSelect:"none" }}>
           {colHints.map((hint, colIndex) => (
             <div
               key={colIndex}
@@ -76,7 +76,7 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints, calculateHints })
 
         <div className="flex">
           {/* Row Hints */}
-          <div className="grid grid-rows-5 text-white mr-4" style={{ userSelect:"none" }}>
+          <div className="grid grid-rows-5 text-white mr-4 w-[100px]" style={{ userSelect:"none" }}>
             {rowHints.map((hint, rowIndex) => (
               <div
                 key={rowIndex}
@@ -89,12 +89,10 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints, calculateHints })
 
           {/* Render the Answer Grid */}
           <div
-            className="grid gap-1"
+            className={`grid gap-1 w-[50vw] h-[50vw] max-w-[400px] max-h-[400px]`}
             style={{
               gridTemplateColumns: `repeat(${grid.length}, 1fr)`,
               gridTemplateRows: `repeat(${grid.length}, 1fr)`,
-              width: "400px",
-              height: "400px",
             }}
             onMouseLeave={() => setIsMouseDown(false)} // Reset when mouse leaves the grid
           >

@@ -32,12 +32,14 @@ const Timer: React.FC<TimerProps> = ({ resetTimer, onResetComplete }) => {
   const milliseconds = time % 100;
 
   return (
-    <div className="text-white font-vt323 text-5xl">
-      <p>
-        {hours}:{minutes.toString().padStart(2, "0")}:
-        {seconds.toString().padStart(2, "0")}:
-        {milliseconds.toString().padStart(2, "0")}
-      </p>
+    <div className="w-screen justify-center flex">
+      <div className="text-white font-vt323 text-5xl">
+        <p>
+          {hours}:{minutes.toString().padStart(2, "0")}:
+          {seconds.toString().padStart(2, "0")}:
+          {milliseconds.toString().padStart(2, "0")}
+        </p>
+      </div>
     </div>
   );
 };
