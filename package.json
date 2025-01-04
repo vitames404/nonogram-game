@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
+    "mongoose": "^8.9.3",
     "pixelarticons": "^1.8.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
