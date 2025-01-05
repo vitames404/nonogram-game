@@ -3,19 +3,17 @@ import React, { useEffect, useState } from "react";
 interface TimerProps {
   resetTimer: boolean;
   onResetComplete: () => void;
+  onComplete?: (timeTaken: number) => void; // Make onComplete optional
 }
 
-const Timer: React.FC<TimerProps> = ({ resetTimer, onResetComplete }) => {
-  // State to store current time
+const Timer: React.FC<TimerProps> = ({ resetTimer, onResetComplete, onComplete }) => {
   const [time, setTime] = useState(0);
 
   useEffect(() => {
-    // Set the interval and store its ID
     const intervalId = setInterval(() => {
       setTime((prevTime) => prevTime + 1);
     }, 10);
 
-    // Cleanup the interval when the component unmounts
     return () => clearInterval(intervalId);
   }, []);
 
@@ -25,6 +23,13 @@ const Timer: React.FC<TimerProps> = ({ resetTimer, onResetComplete }) => {
       onResetComplete(); // Notify parent that reset is complete
     }
   }, [resetTimer, onResetComplete]);
+
+  // Call onComplete when the puzzle is solved (if provided)
+  useEffect(() => {
+    if (onComplete && time > 0) {
+      onComplete(time); // Pass the total time to the parent
+    }
+  }, [time, onComplete]);
 
   const hours = Math.floor(time / 360000);
   const minutes = Math.floor((time % 360000) / 6000);

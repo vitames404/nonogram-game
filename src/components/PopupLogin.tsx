@@ -70,19 +70,19 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
               onChange={(e) => setUsername(e.target.value)}
               className="p-2 rounded bg-gray-700 text-white"
             />
+
+            {/* Password Input (if user exists) */}
+            {isUserExists === true && (
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="p-2 rounded bg-gray-700 text-white mt-4"
+              />
+            )}
+            
           </div>
-
-          {/* Password Input (if user exists) */}
-          {isUserExists === true && (
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="p-2 rounded bg-gray-700 text-white mt-4"
-            />
-          )}
-
           {/* Next/Join Button */}
           <button
             onClick={(e) => {

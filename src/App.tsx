@@ -4,6 +4,7 @@ import Buttons from "./components/Buttons.tsx";
 import Timer from "./components/Timer.tsx";
 
 import Login from "./pages/Login.tsx";
+import DailyChallenge from "./pages/DailyChallenge.tsx";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
@@ -79,8 +80,10 @@ const App: React.FC = () => {
             <main className="flex-1 flex flex-col items-center justify-center p-4">
               <div className="relative flex flex-col items-center gap-4">
                 {/* Timer */}
-                <Timer resetTimer={resetTimer} onResetComplete={() => setResetTimer(false)} />
-                  
+                <Timer
+                    resetTimer={resetTimer}
+                    onResetComplete={() => setResetTimer(false)}
+                  />
                 {/* Grid */}
                 <Grid
                   grid={grid}
@@ -99,6 +102,7 @@ const App: React.FC = () => {
         }
         />
         <Route path="/home" element={<Login/>}/>
+        <Route path="/daily-challenge" element={<DailyChallenge calculateHints={calculateHints}/>}/>
       </Routes>
     </Router>
   );
