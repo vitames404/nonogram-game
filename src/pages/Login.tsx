@@ -1,21 +1,30 @@
 import React, { useState } from "react";
-import PopupLogin from "../components/PopupLogin.tsx";
-import PopupRegister from "../components/PopupRegister.tsx";
+import PopupLogin from "../components/PopupLogin";
+import PopupRegister from "../components/PopupRegister";
+import { Navigate } from "react-router-dom";
 
 const Login = () => {
   const [state, setState] = useState<number>(1); // 1: Login, 2: Register, 3: Guest
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
   // Handle successful login
-  const handleLoginSuccess = (username: string) => {
-    alert(`Welcome back, ${username}!`);
-    // Redirect or update the app state as needed
+  const handleLoginSuccess = () => {
+    setRedirectTo("/"); // Redirect to the game page
   };
 
   // Handle successful registration
   const handleRegisterSuccess = () => {
-    alert('Registration successful!');
-    setState(1); // Switch back to the login popup
+    setRedirectTo("/teste"); // Redirect to the test page
   };
+
+  const handleGuestLogin = () => {
+    setRedirectTo("/teste"); // Redirect for guest login
+  };
+
+  // If redirectTo is set, render the Navigate component
+  if (redirectTo) {
+    return <Navigate to={redirectTo} />;
+  }
 
   return (
     <>
@@ -23,7 +32,7 @@ const Login = () => {
         <PopupLogin
           onLoginSuccess={handleLoginSuccess}
           onRegister={() => setState(2)}
-          onGuestLogin={() => setState(3)}
+          onGuestLogin={handleGuestLogin}
         />
       )}
       {state === 2 && (

@@ -7,6 +7,8 @@ import Login from "./pages/Login.tsx";
 import DailyChallenge from "./pages/DailyChallenge.tsx";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./components/auth/AuthContext"; // Contexto de autenticação
+import ProtectedRoute from "./components/auth/ProtectedRoute"; // Rota protegida
 
 const App: React.FC = () => {
   const [grid, setGrid] = useState<number[][]>([]);
@@ -70,41 +72,62 @@ const App: React.FC = () => {
     return { rowHints, colHints };
   };
 
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" 
-        element=
-        {
-          <div className="flex flex-col min-h-screen bg-gray-900 text-white">
-            <main className="flex-1 flex flex-col items-center justify-center p-4">
-              <div className="relative flex flex-col items-center gap-4">
-                {/* Timer */}
-                <Timer
-                    resetTimer={resetTimer}
-                    onResetComplete={() => setResetTimer(false)}
-                  />
-                {/* Grid */}
-                <Grid
-                  grid={grid}
-                  rowHints={rowHints}
-                  colHints={colHints}
-                  calculateHints={calculateHints} // Pass the calculateHints function as a prop
-                />
+  const handleWin = () => {
+    alert("You won the infinite mode!");
+  }
 
-                {/* Buttons */}
-                <div className="flex gap-2 mt-4">
-                  <Buttons onClick={generateGame} />
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Página de Login (aberta a todos) */}
+          <Route path="/home" element={<Login />} />
+
+          {/* Rota protegida para o jogo principal */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+                  <main className="flex-1 flex flex-col items-center justify-center p-4">
+                    <div className="relative flex flex-col items-center gap-4">
+                      {/* Timer */}
+                      <Timer
+                        resetTimer={resetTimer}
+                        onResetComplete={() => setResetTimer(false)}
+                      />
+                      {/* Grid */}
+                      <Grid
+                        grid={grid}
+                        rowHints={rowHints}
+                        colHints={colHints}
+                        calculateHints={calculateHints}
+                        winCallBack={handleWin}
+                      />
+
+                      {/* Buttons */}
+                      <div className="flex gap-2 mt-4">
+                        <Buttons onClick={generateGame} />
+                      </div>
+                    </div>
+                  </main>
                 </div>
-              </div>
-            </main>
-          </div>
-        }
-        />
-        <Route path="/home" element={<Login/>}/>
-        <Route path="/daily-challenge" element={<DailyChallenge calculateHints={calculateHints}/>}/>
-      </Routes>
-    </Router>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rota protegida para o desafio diário */}
+          <Route
+            path="/daily-challenge"
+            element={
+              <ProtectedRoute>
+                <DailyChallenge calculateHints={calculateHints} />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 };
 

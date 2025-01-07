@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { Navigate } from "react-router-dom";
 
 interface PopupLoginProps {
   onLoginSuccess: (username: string) => void; // Callback for successful login
   onRegister: () => void; // Callback to switch to the register flow
-  onGuestLogin: () => void; // Callback to switch to guest login
+  onGuestLogin: () => void;  
 }
 
 const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onGuestLogin }) => {
@@ -32,30 +33,31 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
     }
   };
 
-  // Handle login submission
   const handleLoginSubmit = async () => {
+    console.log('Submitting login with:', username, password); // Debugging
     try {
       const response = await fetch('http://localhost:3000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password }), 
+        credentials: 'include', 
       });
-
-      const data = await response.json();
-
+  
       if (response.ok) {
-        onLoginSuccess(username); // Notify parent component of successful login
+        onLoginSuccess(username);
+        alert('Login successful!');
       } else {
-        setError(data.message); // Display error message
+        const errorData = await response.json();
+        setError(errorData.message);
       }
     } catch (err) {
       console.error('Error logging in:', err);
       setError('An error occurred. Please try again.');
     }
   };
-
+  
   return (
     <div className="text-white flex justify-center items-center w-screen h-screen bg-gray-900">
       <form>
@@ -111,7 +113,7 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
                 className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 mt-4"
               >
                 Register
-              </button>
+              </button>              
               <button
                 onClick={(e) => {
                   e.preventDefault(); // Prevent form submission

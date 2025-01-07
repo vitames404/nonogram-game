@@ -27,7 +27,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
       setGrid(puzzle.grid);
       setRowHints(puzzle.rowHints);
       setColHints(puzzle.colHints);
-      setResetTimer(true); // Reset the timer (if applicable)
+      setResetTimer(true); 
     } catch (err) {
       console.error("Error fetching the daily challenge:", err);
       setError("Failed to fetch the daily challenge. Please try again.");
@@ -35,6 +35,10 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
       setLoading(false);
     }
   };
+
+  const handleWin = () => {
+    alert("You won the DAILY MODE mode!");
+  }
 
   useEffect(() => {
     fetchDailyChallenge();
@@ -61,6 +65,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
               rowHints={rowHints}
               colHints={colHints}
               calculateHints={calculateHints} 
+              winCallBack={handleWin}
             />
           )}
 

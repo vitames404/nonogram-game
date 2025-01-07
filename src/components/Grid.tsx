@@ -5,9 +5,10 @@ interface GridProps {
   rowHints: number[][];
   colHints: number[][];
   calculateHints: (grid: number[][]) => { rowHints: number[][]; colHints: number[][] };
+  winCallBack: () => void;
 }
 
-const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints, calculateHints }) => {
+const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints, calculateHints, winCallBack }) => {
   const [answerGrid, setAnswerGrid] = useState<number[][]>([]);
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
 
@@ -37,9 +38,7 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints, calculateHints })
     setAnswerGrid(newAnswerGrid);
 
     if (checkWin(newAnswerGrid)) {
-      alert("You win!");
-    } else {
-      console.log("Not correct yet. Keep trying!");
+      winCallBack();
     }
   };
 

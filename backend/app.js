@@ -3,20 +3,23 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const DailyPuzzle = require('./models/DailyPuzzle');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
 require('dotenv').config(); // Load environment variables
 
 const app = express();
 
-// Middleware
-const corsOptions = {
-  origin: 'http://localhost:3001', // Replace with your frontend's address
-  credentials: true, // Allow credentials if needed
-};
-app.use(cors(corsOptions));
+
+app.use(cors({
+  origin: 'http://localhost:5173', // Frontend URL
+  credentials: true, // Allow cookies to be sent and received
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+app.use(cookieParser());
 
 const port = 3000;
 
@@ -34,19 +37,22 @@ mongoose
   });
 
 // Routes
-app.get('/', (req, res) => {
-  res.send('Hello world!');
-});
+// Functions and middlewared that will generate and auth the token jwt
+const generateAccessToken = (user) => {
+  return jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '15m' });
+};
 
-// Route to get users
-app.get('/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.status(200).json({ users });
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching users', error: err });
-  }
-});
+const authenticateToken = (req, res, next) => {
+
+  const token = req.cookies.accessToken; // Get the access token from cookies
+  if (!token) return res.status(401).json({ message: 'Access Token missing' });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid Access Token' });
+    req.user = user; // Attach the user information to the request
+    next();
+  });
+};
 
 // Route to check if the entered username already exists
 app.post('/check-username', async (req, res) => {
@@ -91,9 +97,10 @@ app.post('/register', async (req, res) => {
 
 // Route to login the user
 app.post('/login', async (req, res) => {
+  
+  const { username, password } = req.body;
+  
   try {
-    const { username, password } = req.body;
-
     // Find the user
     const user = await User.findOne({ username });
     if (!user) {
@@ -106,10 +113,71 @@ app.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid password' });
     }
 
-    res.status(200).json({ message: 'Login successful', user });
+    const accessToken = jwt.sign(
+      { username: user.username }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '5m' } 
+    );
+
+    const refreshToken = jwt.sign(
+      { username: user.username },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false, // Set to true in production (with HTTPS)
+      sameSite: 'Strict',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false, // Set to true in production (with HTTPS)
+      sameSite: 'Strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.status(200).json({
+      message: 'Login successful',
+    });
+
   } catch (err) {
-    res.status(500).json({ message: 'Error logging in', error: err });
+    console.log(err.message);
+    res.status(500).json({ message: 'Error logging in', err});
   }
+});
+
+// Rooute to renew the accessToken
+app.post('/refresh-token', (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) return res.status(401).json({ message: 'Refresh Token missing' });
+
+  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid Refresh Token' });
+
+    const newAccessToken = generateAccessToken(user);
+    res.cookie('accessToken', newAccessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Strict',
+      maxAge: 15 * 60 * 1000,
+    });
+    res.status(200).json({ message: 'Access Token refreshed' });
+  });
+});
+
+// Route for logout
+app.post('/logout', (req, res) => {
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+  res.status(200).json({ message: 'Logout successful' });
+});
+
+// Route that will call the authenticateToken
+app.get('/protected', authenticateToken, (req, res) => {
+  res.status(200).json({ message: 'Access granted to protected route', user: req.user });
 });
 
 //-------------------------------------------------------------------------
