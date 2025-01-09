@@ -16,6 +16,8 @@ const App: React.FC = () => {
   const [colHints, setColHints] = useState<number[][]>([]);
 
   const [resetTimer, setResetTimer] = useState(false);
+  const [highScore, setHighScore] = useState<number>(0);
+  const [currentScore, setCurrentScore] = useState<number>(0);
 
   useEffect(() => {
     // Generate a game when the component mounts
@@ -72,9 +74,68 @@ const App: React.FC = () => {
     return { rowHints, colHints };
   };
 
-  const handleWin = () => {
-    alert("You won the infinite mode!");
+  const getHighscore = async() =>{
+    // Retrieve the user past highscore
+    try {
+      const response = await fetch('http://localhost:3000/get-highscore', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      const data = await response.json();
+      setHighScore(data.highscore);
+      console.log(highScore);
+    } catch (err) {
+      console.error('Error checking username:', err);
+    }
   }
+
+  const updateHS = async () => {
+    try {
+      // Update the high score on the server
+      const response = await fetch('http://localhost:3000/update-highscore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ highscore: currentScore }),
+        credentials: 'include', // Include cookies for authentication
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setHighScore(data.highscore); // Update the high score in the state
+      } else {
+        console.error('Failed to update high score:', data.message);
+      }
+    } catch (err) {
+      console.error('Error updating high score:', err);
+    }
+  }
+
+  const handleWin = async () => { 
+
+    alert("You won lmaoo");
+
+    // Define the user past highscore
+    getHighscore();
+
+    // Compare high and current score
+    if(currentScore < highScore){
+      // Update highscore
+      updateHS();
+      alert("New Highscore!!");
+    }
+
+    generateGame();
+    
+  }
+
+  const handleTimerComplete = (timeTaken: number) => {
+    setCurrentScore(timeTaken);
+  };
 
   return (
     <AuthProvider>
@@ -95,6 +156,7 @@ const App: React.FC = () => {
                       <Timer
                         resetTimer={resetTimer}
                         onResetComplete={() => setResetTimer(false)}
+                        onComplete={handleTimerComplete}
                       />
                       {/* Grid */}
                       <Grid
@@ -107,7 +169,7 @@ const App: React.FC = () => {
 
                       {/* Buttons */}
                       <div className="flex gap-2 mt-4">
-                        <Buttons onClick={generateGame} />
+                        <Buttons onClick={handleWin} />
                       </div>
                     </div>
                   </main>

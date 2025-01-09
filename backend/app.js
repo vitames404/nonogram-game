@@ -95,6 +95,66 @@ app.post('/register', async (req, res) => {
   }
 });
 
+// Route to update the user's high score
+app.post('/update-highscore', authenticateToken, async (req, res) => {
+  const { highscore } = req.body; // New high score sent from the client
+  const username = req.user.username; // Extracted from the JWT token
+
+  try {
+    // Find the user in the database
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if the new high score is higher than the existing one
+    if (highscore < user.highscore) {
+      // Update the high score
+      user.highscore = highscore;
+      await user.save();
+      return res.status(200).json({ message: 'High score updated successfully', highscore: user.highscore });
+    } else {
+      return res.status(200).json({ message: 'Current high score is higher or equal', highscore: user.highscore });
+    }
+  } catch (err) {
+    console.error('Error updating high score:', err);
+    return res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+});
+
+// Update user highscore
+app.get('/get-highscore', async (req, res) => {
+    const token = req.cookies?.accessToken;
+  
+    if (!token) {
+      return res.status(400).json({ message: 'Access token missing' });
+    }
+  
+    try {
+      // Fetch username from the cookie
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const username = decoded.username;
+  
+      if (username) {
+        // Find username in the database
+        const user = await User.findOne({ username });
+        if (user) {
+          // Return the high score
+          const highscore = user.highscore; // Assuming `highscore` exists in the user schema
+          return res.status(200).json({ username, highscore });
+        } else {
+          return res.status(404).json({ message: 'User not found in the database' });
+        }
+      } else {
+        return res.status(400).json({ message: 'Invalid token' });
+      }
+    } catch (err) {
+      console.error('Error verifying token or fetching user:', err);
+      return res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+});
+
+
 // Route to login the user
 app.post('/login', async (req, res) => {
   
@@ -144,7 +204,6 @@ app.post('/login', async (req, res) => {
     });
 
   } catch (err) {
-    console.log(err.message);
     res.status(500).json({ message: 'Error logging in', err});
   }
 });
