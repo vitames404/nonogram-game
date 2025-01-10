@@ -6,15 +6,21 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const redis = require('redis');
 
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
 
 const app = express();
 
+const redisClient = redis.createClient();
+
+redisClient.on('error', (err) => {
+  console.error('Redis error:', err);
+});
 
 app.use(cors({
-  origin: 'http://localhost:5173', // Frontend URL
-  credentials: true, // Allow cookies to be sent and received
+  origin: 'http://localhost:5173',
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -23,7 +29,6 @@ app.use(cookieParser());
 
 const port = 3000;
 
-// Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
@@ -36,25 +41,21 @@ mongoose
     console.error('Error connecting to MongoDB:', err);
   });
 
-// Routes
-// Functions and middlewared that will generate and auth the token jwt
 const generateAccessToken = (user) => {
   return jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '15m' });
 };
 
 const authenticateToken = (req, res, next) => {
-
-  const token = req.cookies.accessToken; // Get the access token from cookies
+  const token = req.cookies.accessToken;
   if (!token) return res.status(401).json({ message: 'Access Token missing' });
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: 'Invalid Access Token' });
-    req.user = user; // Attach the user information to the request
+    req.user = user;
     next();
   });
 };
 
-// Route to check if the entered username already exists
 app.post('/check-username', async (req, res) => {
   try {
     const { username } = req.body;
@@ -65,27 +66,22 @@ app.post('/check-username', async (req, res) => {
   }
 });
 
-// Route to register the new user
 app.post('/register', async (req, res) => {
   try {
     const { username, password, email } = req.body;
 
-    // Check if the user already exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Check if the email already exists
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user
     const newUser = new User({ username, password: hashedPassword, email });
     await newUser.save();
 
@@ -95,23 +91,20 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Route to update the user's high score
 app.post('/update-highscore', authenticateToken, async (req, res) => {
-  const { highscore } = req.body; // New high score sent from the client
-  const username = req.user.username; // Extracted from the JWT token
+  const { highscore } = req.body;
+  const username = req.user.username;
 
   try {
-    // Find the user in the database
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if the new high score is higher than the existing one
     if (highscore < user.highscore) {
-      // Update the high score
       user.highscore = highscore;
       await user.save();
+      redisClient.setex(username, 3600, JSON.stringify({ highscore: user.highscore }));
       return res.status(200).json({ message: 'High score updated successfully', highscore: user.highscore });
     } else {
       return res.status(200).json({ message: 'Current high score is higher or equal', highscore: user.highscore });
@@ -122,61 +115,61 @@ app.post('/update-highscore', authenticateToken, async (req, res) => {
   }
 });
 
-// Update user highscore
-app.get('/get-highscore', async (req, res) => {
-    const token = req.cookies?.accessToken;
-  
-    if (!token) {
-      return res.status(400).json({ message: 'Access token missing' });
-    }
-  
-    try {
-      // Fetch username from the cookie
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const username = decoded.username;
-  
-      if (username) {
-        // Find username in the database
-        const user = await User.findOne({ username });
-        if (user) {
-          // Return the high score
-          const highscore = user.highscore; // Assuming `highscore` exists in the user schema
-          return res.status(200).json({ username, highscore });
+app.get('/get-userinfo', async (req, res) => {
+  const token = req.cookies?.accessToken;
+
+  if (!token) {
+    return res.status(400).json({ message: 'Access token missing' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const username = decoded.username;
+
+    if (username) {
+      redisClient.get(username, async (err, data) => {
+        if (err) throw err;
+
+        if (data) {
+          return res.status(200).json(JSON.parse(data));
         } else {
-          return res.status(404).json({ message: 'User not found in the database' });
+          const user = await User.findOne({ username });
+          if (user) {
+            const highscore = user.highscore;
+            redisClient.setex(username, 3600, JSON.stringify({ username, highscore }));
+            return res.status(200).json({ username, highscore });
+          } else {
+            return res.status(404).json({ message: 'User not found in the database' });
+          }
         }
-      } else {
-        return res.status(400).json({ message: 'Invalid token' });
-      }
-    } catch (err) {
-      console.error('Error verifying token or fetching user:', err);
-      return res.status(500).json({ message: 'Internal server error', error: err.message });
+      });
+    } else {
+      return res.status(400).json({ message: 'Invalid token' });
     }
+  } catch (err) {
+    console.error('Error verifying token or fetching user:', err);
+    return res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
 });
 
-
-// Route to login the user
 app.post('/login', async (req, res) => {
-  
   const { username, password } = req.body;
-  
+
   try {
-    // Find the user
     const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Compare the password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid password' });
     }
 
     const accessToken = jwt.sign(
-      { username: user.username }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '5m' } 
+      { username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
     );
 
     const refreshToken = jwt.sign(
@@ -187,16 +180,16 @@ app.post('/login', async (req, res) => {
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: false, // Set to true in production (with HTTPS)
+      secure: false,
       sameSite: 'Strict',
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 15 * 60 * 1000,
     });
-    
+
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false, // Set to true in production (with HTTPS)
+      secure: false,
       sameSite: 'Strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(200).json({
@@ -204,11 +197,10 @@ app.post('/login', async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ message: 'Error logging in', err});
+    res.status(500).json({ message: 'Error logging in', err });
   }
 });
 
-// Rooute to renew the accessToken
 app.post('/refresh-token', (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) return res.status(401).json({ message: 'Refresh Token missing' });
@@ -227,23 +219,16 @@ app.post('/refresh-token', (req, res) => {
   });
 });
 
-// Route for logout
 app.post('/logout', (req, res) => {
   res.clearCookie('accessToken');
   res.clearCookie('refreshToken');
   res.status(200).json({ message: 'Logout successful' });
 });
 
-// Route that will call the authenticateToken
 app.get('/protected', authenticateToken, (req, res) => {
   res.status(200).json({ message: 'Access granted to protected route', user: req.user });
 });
 
-//-------------------------------------------------------------------------
-
-// Routes for the daily challenge creation
-
-// Utility Functions
 const createGrid = (size) => {
   return Array.from({ length: size }, () =>
     Array.from({ length: size }, () => (Math.random() < 0.5 ? 0 : 1))
@@ -279,10 +264,9 @@ const calculateHints = (grid) => {
   return { rowHints, colHints };
 };
 
-// Route to Create a Daily Challenge
 app.post('/create-daily', async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
     const existingPuzzle = await DailyPuzzle.findOne({ date: today });
 
     if (existingPuzzle) {
@@ -316,7 +300,6 @@ app.post('/create-daily', async (req, res) => {
   }
 });
 
-// Route to Fetch the Daily Challenge
 app.get('/get-daily', async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];

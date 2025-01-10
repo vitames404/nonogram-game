@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Grid from "../components/Grid"; // Assuming the Grid component is already created
 import Timer from "../components/Timer"; // Optional, include if needed
-import axios from "axios";
+import axios,  {AxiosError} from "axios";
 
 interface DailyChallengeProps {
     calculateHints: (grid: number[][]) => { rowHints: number[][]; colHints: number[][] };
@@ -20,17 +20,46 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get("http://localhost:3000/get-daily");
-      const { puzzle } = response.data;
-      console.log(response.data.puzzle.grid);
-
-      setGrid(puzzle.grid);
-      setRowHints(puzzle.rowHints);
-      setColHints(puzzle.colHints);
-      setResetTimer(true); 
-    } catch (err) {
-      console.error("Error fetching the daily challenge:", err);
-      setError("Failed to fetch the daily challenge. Please try again.");
+  
+      // Step 1: Try to fetch the daily challenge
+      const fetchResponse = await fetch("http://localhost:3000/get-daily");
+  
+      if (!fetchResponse.ok) {
+        if (fetchResponse.status === 404) {
+          const createResponse = await fetch("http://localhost:3000/create-daily", {
+            method: "POST",
+          });
+  
+          if (!createResponse.ok) {
+            throw new Error("Failed to create the daily challenge.");
+          }
+  
+          const newChallengeResponse = await fetch("http://localhost:3000/get-daily");
+          if (!newChallengeResponse.ok) {
+            throw new Error("Failed to fetch the newly created challenge.");
+          }
+  
+          const { puzzle: newPuzzle } = await newChallengeResponse.json();
+  
+          setGrid(newPuzzle.grid);
+          setRowHints(newPuzzle.rowHints);
+          setColHints(newPuzzle.colHints);
+          setResetTimer(true);
+        } else {
+          throw new Error(`Failed to fetch the daily challenge. Status: ${fetchResponse.status}`);
+        }
+      } else {
+        // If fetch is successful, set the grid and hints
+        const { puzzle } = await fetchResponse.json();
+        setGrid(puzzle.grid);
+        setRowHints(puzzle.rowHints);
+        setColHints(puzzle.colHints);
+        setResetTimer(true);
+      }
+    } catch (error) {
+      // Handle any unexpected errors
+      console.error("Error in fetchDailyChallenge:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

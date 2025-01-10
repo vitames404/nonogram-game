@@ -2,49 +2,55 @@ import React, { useState, useEffect } from "react";
 import Grid from "./components/Grid.tsx";
 import Buttons from "./components/Buttons.tsx";
 import Timer from "./components/Timer.tsx";
-
 import Login from "./pages/Login.tsx";
 import DailyChallenge from "./pages/DailyChallenge.tsx";
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./components/auth/AuthContext"; // Contexto de autenticação
-import ProtectedRoute from "./components/auth/ProtectedRoute"; // Rota protegida
+import { AuthProvider } from "./components/auth/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const App: React.FC = () => {
   const [grid, setGrid] = useState<number[][]>([]);
   const [rowHints, setRowHints] = useState<number[][]>([]);
   const [colHints, setColHints] = useState<number[][]>([]);
-
   const [resetTimer, setResetTimer] = useState(false);
   const [highScore, setHighScore] = useState<number>(0);
+  const [highscorePrint, setHighscorePrint] = useState<string>("0:00:00");
+  const [username, setUsername] = useState<string>("Loading...")
   const [currentScore, setCurrentScore] = useState<number>(0);
 
   useEffect(() => {
-    // Generate a game when the component mounts
     generateGame();
+    getHighscore();
   }, []);
 
-  const generateGame = () => {    
-    console.log("Generating new game...");
-    const newGrid = createGrid(5); // Generate a new 5x5 grid
+  useEffect(() => {
+    formatTime(highScore);
+  }, [highScore]);
+
+  const generateGame = () => {
+    const newGrid = createGrid(5);
     setGrid(newGrid);
 
     const { rowHints, colHints } = calculateHints(newGrid);
     setRowHints(rowHints);
     setColHints(colHints);
 
-    // Add a function that resets the Timer
     setResetTimer(true);
   };
 
-  // Create a random grid (answer grid)
+  const formatTime = (centiseconds: number): void => {
+    const minutes = Math.floor((centiseconds / 100) / 60);
+    const seconds = Math.floor((centiseconds / 100) % 60);
+    const cs = centiseconds % 100;
+    setHighscorePrint(`${minutes}:${String(seconds).padStart(2, '0')}:${String(cs).padStart(2, '0')}`);
+  };
+
   const createGrid = (size: number): number[][] => {
     return Array.from({ length: size }, () =>
       Array.from({ length: size }, () => (Math.random() < 0.5 ? 0 : 1))
     );
   };
 
-  // Generate hints for rows and columns
   const calculateHints = (grid: number[][]) => {
     const calculateLineHints = (line: number[]) => {
       const hints: number[] = [];
@@ -52,18 +58,18 @@ const App: React.FC = () => {
 
       for (const cell of line) {
         if (cell === 1) {
-          count += 1; // Count consecutive 1's
+          count += 1;
         } else if (count > 0) {
-          hints.push(count); // Add the count to hints
+          hints.push(count);
           count = 0;
         }
       }
 
       if (count > 0) {
-        hints.push(count); // Add the last group if it ends with 1's
+        hints.push(count);
       }
 
-      return hints.length > 0 ? hints : [0]; // Return [0] if no 1's are found
+      return hints.length > 0 ? hints : [0];
     };
 
     const rowHints = grid.map((row) => calculateLineHints(row));
@@ -74,8 +80,7 @@ const App: React.FC = () => {
     return { rowHints, colHints };
   };
 
-  const getHighscore = async() =>{
-    // Retrieve the user past highscore
+  const getHighscore = async () => {
     try {
       const response = await fetch('http://localhost:3000/get-highscore', {
         method: 'GET',
@@ -86,52 +91,45 @@ const App: React.FC = () => {
       });
       const data = await response.json();
       setHighScore(data.highscore);
-      console.log(highScore);
+      setUsername(data.username);
     } catch (err) {
       console.error('Error checking username:', err);
     }
-  }
+  };
 
   const updateHS = async () => {
     try {
-      // Update the high score on the server
       const response = await fetch('http://localhost:3000/update-highscore', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ highscore: currentScore }),
-        credentials: 'include', // Include cookies for authentication
+        credentials: 'include',
       });
 
       const data = await response.json();
       if (response.ok) {
-        setHighScore(data.highscore); // Update the high score in the state
+        setHighScore(data.highscore);
       } else {
         console.error('Failed to update high score:', data.message);
       }
     } catch (err) {
       console.error('Error updating high score:', err);
     }
-  }
+  };
 
-  const handleWin = async () => { 
-
+  const handleWin = async () => {
     alert("You won lmaoo");
-
-    // Define the user past highscore
     getHighscore();
 
-    // Compare high and current score
-    if(currentScore < highScore){
-      // Update highscore
+    if (currentScore < highScore) {
       updateHS();
       alert("New Highscore!!");
     }
 
     generateGame();
-    
-  }
+  };
 
   const handleTimerComplete = (timeTaken: number) => {
     setCurrentScore(timeTaken);
@@ -141,10 +139,7 @@ const App: React.FC = () => {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Página de Login (aberta a todos) */}
           <Route path="/home" element={<Login />} />
-
-          {/* Rota protegida para o jogo principal */}
           <Route
             path="/"
             element={
@@ -152,13 +147,11 @@ const App: React.FC = () => {
                 <div className="flex flex-col min-h-screen bg-gray-900 text-white">
                   <main className="flex-1 flex flex-col items-center justify-center p-4">
                     <div className="relative flex flex-col items-center gap-4">
-                      {/* Timer */}
                       <Timer
                         resetTimer={resetTimer}
                         onResetComplete={() => setResetTimer(false)}
                         onComplete={handleTimerComplete}
                       />
-                      {/* Grid */}
                       <Grid
                         grid={grid}
                         rowHints={rowHints}
@@ -166,19 +159,20 @@ const App: React.FC = () => {
                         calculateHints={calculateHints}
                         winCallBack={handleWin}
                       />
-
-                      {/* Buttons */}
                       <div className="flex gap-2 mt-4">
                         <Buttons onClick={handleWin} />
                       </div>
+                    </div>
+                    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 p-4 rounded-lg shadow-lg md:absolute md:left-auto md:right-4 md:transform-none">
+                      <h3 className="text-lg font-bold">User Info</h3>
+                      <p>Name: {username}</p>
+                      <p>High Score: {highscorePrint}</p>
                     </div>
                   </main>
                 </div>
               </ProtectedRoute>
             }
           />
-
-          {/* Rota protegida para o desafio diário */}
           <Route
             path="/daily-challenge"
             element={
