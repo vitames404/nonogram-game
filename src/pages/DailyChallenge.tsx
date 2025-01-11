@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import Grid from "../components/Grid"; // Assuming the Grid component is already created
-import Timer from "../components/Timer"; // Optional, include if needed
-import axios,  {AxiosError} from "axios";
+import Grid from "../components/Grid"; 
+import Timer from "../components/Timer"; 
 
 interface DailyChallengeProps {
     calculateHints: (grid: number[][]) => { rowHints: number[][]; colHints: number[][] };
@@ -21,7 +20,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
       setLoading(true);
       setError(null);
   
-      // Step 1: Try to fetch the daily challenge
+      // Try to fetch the daily challenge
       const fetchResponse = await fetch("http://localhost:3000/get-daily");
   
       if (!fetchResponse.ok) {
@@ -97,14 +96,6 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
               winCallBack={handleWin}
             />
           )}
-
-          {/* Fetch Daily Challenge Button */}
-          <button
-            onClick={fetchDailyChallenge}
-            className="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
-          >
-            Fetch Daily Challenge Again
-          </button>
         </div>
       </main>
     </div>

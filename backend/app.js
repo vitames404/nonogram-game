@@ -91,6 +91,15 @@ app.post('/register', async (req, res) => {
   }
 });
 
+app.post('/add-ranking', authenticateToken, async(req, res) => {
+  // Get the user and what was the time he completed
+  // save on the ranking table
+});
+
+app.get('/fetch-ranking', authenticateToken, async(req, res) => {
+  // Get all the ranks for today
+});
+
 app.post('/update-highscore', authenticateToken, async (req, res) => {
   const { highscore } = req.body;
   const username = req.user.username;
