@@ -1,22 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('./models/User');
+const Ranking = require('./models/Ranking');
 const DailyPuzzle = require('./models/DailyPuzzle');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const redis = require('redis');
 
 require('dotenv').config();
 
 const app = express();
-
-const redisClient = redis.createClient();
-
-redisClient.on('error', (err) => {
-  console.error('Redis error:', err);
-});
 
 app.use(cors({
   origin: 'http://localhost:5173',
@@ -91,13 +85,29 @@ app.post('/register', async (req, res) => {
   }
 });
 
-app.post('/add-ranking', authenticateToken, async(req, res) => {
-  // Get the user and what was the time he completed
-  // save on the ranking table
+app.post('/add-ranking', authenticateToken, async (req, res) => {
+  try {
+    const { time } = req.body;
+    const username = req.user.username;
+    const date = new Date().toISOString().split('T')[0];
+
+    const newRankingIndex = new Ranking({ username, time, date });
+    await newRankingIndex.save();
+
+    res.status(201).json({ message: 'New score added to the ranking', ranking: newRankingIndex });
+  } catch (err) {
+    res.status(500).json({ message: 'Error registering new entry', error: err });
+  }
 });
 
-app.get('/fetch-ranking', authenticateToken, async(req, res) => {
-  // Get all the ranks for today
+app.get('/fetch-ranking', authenticateToken, async (req, res) => {
+  try {
+    const date = new Date().toISOString().split('T')[0];
+    const rankings = await Ranking.find({ date }).sort({ time: 1 });
+    res.status(200).json({ rankings });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching rankings', error: err });
+  }
 });
 
 app.post('/update-highscore', authenticateToken, async (req, res) => {
@@ -113,7 +123,6 @@ app.post('/update-highscore', authenticateToken, async (req, res) => {
     if (highscore < user.highscore) {
       user.highscore = highscore;
       await user.save();
-      redisClient.setex(username, 3600, JSON.stringify({ highscore: user.highscore }));
       return res.status(200).json({ message: 'High score updated successfully', highscore: user.highscore });
     } else {
       return res.status(200).json({ message: 'Current high score is higher or equal', highscore: user.highscore });
@@ -136,22 +145,13 @@ app.get('/get-userinfo', async (req, res) => {
     const username = decoded.username;
 
     if (username) {
-      redisClient.get(username, async (err, data) => {
-        if (err) throw err;
-
-        if (data) {
-          return res.status(200).json(JSON.parse(data));
-        } else {
-          const user = await User.findOne({ username });
-          if (user) {
-            const highscore = user.highscore;
-            redisClient.setex(username, 3600, JSON.stringify({ username, highscore }));
-            return res.status(200).json({ username, highscore });
-          } else {
-            return res.status(404).json({ message: 'User not found in the database' });
-          }
-        }
-      });
+      const user = await User.findOne({ username });
+      if (user) {
+        const highscore = user.highscore;
+        return res.status(200).json({ username, highscore });
+      } else {
+        return res.status(404).json({ message: 'User not found in the database' });
+      }
     } else {
       return res.status(400).json({ message: 'Invalid token' });
     }

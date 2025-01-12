@@ -82,7 +82,7 @@ const App: React.FC = () => {
 
   const getHighscore = async () => {
     try {
-      const response = await fetch('http://localhost:3000/get-highscore', {
+      const response = await fetch('http://localhost:3000/get-userinfo', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
