@@ -88,25 +88,38 @@ app.post('/register', async (req, res) => {
 app.post('/add-ranking', authenticateToken, async (req, res) => {
   try {
     const { time } = req.body;
-    const username = req.user.username;
-    const date = new Date().toISOString().split('T')[0];
+    const token = req.cookies?.accessToken;
 
-    const newRankingIndex = new Ranking({ username, time, date });
-    await newRankingIndex.save();
+    if (!token) {
+      return res.status(400).json({ message: 'Access token missing' });
+    }
 
-    res.status(201).json({ message: 'New score added to the ranking', ranking: newRankingIndex });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const username = decoded.username;
+    const date = new Date(); // Save the current date as a Date object
+
+    // Update the existing ranking or insert a new one
+    const updatedRanking = await Ranking.findOneAndUpdate(
+      { username }, // Find by username
+      { time, date }, // Update time and date
+      { upsert: true, new: true } // Create if not exists, return the updated document
+    );
+
+    res.status(201).json({ message: 'Ranking updated successfully', ranking: updatedRanking });
   } catch (err) {
-    res.status(500).json({ message: 'Error registering new entry', error: err });
+    console.error('Error in /add-ranking:', err);
+    res.status(500).json({ message: 'Error updating ranking', error: err.message });
   }
 });
 
-app.get('/fetch-ranking', authenticateToken, async (req, res) => {
+app.get('/fetch-ranking', async (req, res) => {
   try {
-    const date = new Date().toISOString().split('T')[0];
-    const rankings = await Ranking.find({ date }).sort({ time: 1 });
+    const currentDate = new Date().toISOString().split('T')[0]; // Get the current date as a string (e.g., "2023-10-25")
+    const rankings = await Ranking.find({ date: { $gte: new Date(currentDate), $lt: new Date(currentDate + 'T23:59:59.999Z') } }).sort({ time: 1 });
     res.status(200).json({ rankings });
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching rankings', error: err });
+    console.error('Error in /fetch-ranking:', err);
+    res.status(500).json({ message: 'Error fetching rankings', error: err.message });
   }
 });
 
