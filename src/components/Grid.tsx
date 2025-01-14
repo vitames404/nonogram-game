@@ -55,10 +55,10 @@ const Grid: React.FC<GridProps> = ({ grid, rowHints, colHints, calculateHints, w
   };
 
   return (
-    <div className="font-vt323 mr-[120px]">
+    <div className="font-vt323 mr-[120px] z-1">
       <div>
         {/* Column Hints */}
-        <div className="grid py-3 grid-cols-5 ml-[110px] h-[120px]" style={{ userSelect:"none" }}>
+        <div className="grid py-3 grid-cols-5 ml-[110px] z-1 h-[120px]" style={{ userSelect:"none" }}>
           {colHints.map((hint, colIndex) => (
             <div
               key={colIndex}

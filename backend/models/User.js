@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true }, 
   email: { type: String, required: true, unique: true }, 
   createdAt: { type: Date, default: Date.now }, 
-  highscore: { type: String, default: "0" }, 
+  highscore: { type: String, default: null }, 
+  alreadyPlayed: {type: Boolean, default: false},
 });
 
 const User = mongoose.model('User', userSchema);

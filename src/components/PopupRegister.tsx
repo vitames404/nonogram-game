@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
 interface PopupRegisterProps {
@@ -11,6 +11,14 @@ const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
 
+  // Populate username from localStorage
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("possibleName");
+    if (storedUsername) {
+      setUsername(storedUsername); // Set the username input value
+    }
+  }, []); 
+
   // Handle registration submission
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent form submission
@@ -20,6 +28,7 @@ const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ username, email, password }),
       });
 
@@ -37,7 +46,7 @@ const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
   };
 
   return (
-    <div className="text-white flex justify-center items-center w-screen h-screen bg-gray-900">
+    <div className="text-white flex justify-center items-center w-screen h-screen text-2xl">
       <form onSubmit={handleRegisterSubmit}>
         <div className="bg-gray-800 p-8 rounded-lg space-y-4">
           {/* Username Section */}

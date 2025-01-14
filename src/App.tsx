@@ -8,6 +8,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./components/auth/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
+import {Canvas} from "@react-three/fiber";
+import {Stars} from "@react-three/drei";
+
 const App: React.FC = () => {
   const [grid, setGrid] = useState<number[][]>([]);
   const [rowHints, setRowHints] = useState<number[][]>([]);
@@ -123,7 +126,7 @@ const App: React.FC = () => {
     alert("You won lmaoo");
     getHighscore();
 
-    if (currentScore < highScore) {
+    if (currentScore < highScore || highScore == null) {
       updateHS();
       alert("New Highscore!!");
     }
@@ -144,7 +147,7 @@ const App: React.FC = () => {
             path="/"
             element={
               <ProtectedRoute>
-                <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+                <div className="flex flex-col min-h-screen relative z-10 text-white">
                   <main className="flex-1 flex flex-col items-center justify-center p-4">
                     <div className="relative flex flex-col items-center gap-4">
                       <Timer
@@ -160,15 +163,29 @@ const App: React.FC = () => {
                         winCallBack={handleWin}
                       />
                       <div className="flex gap-2 mt-4">
-                        <Buttons onClick={handleWin} />
+                        <Buttons onClick={generateGame} />
                       </div>
                     </div>
-                    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 p-4 rounded-lg shadow-lg md:absolute md:left-auto md:right-4 md:transform-none">
-                      <h3 className="text-lg font-bold">User Info</h3>
+                    <div className="font-vt323 text-2xl hidden md:block fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 p-4 rounded-lg shadow-lg md:absolute md:left-auto md:right-4 md:transform-none">
+                      <h3 className="text-3xl font-bold">User Info</h3>
                       <p>Name: {username}</p>
                       <p>High Score: {highscorePrint}</p>
                     </div>
                   </main>
+                </div>
+                                {/* Canvas for Stars */}
+                <div className="fixed inset-0 z-0 pointer-events-none bg-gray-900">
+                  <Canvas>
+                    <Stars
+                      radius={100}
+                      depth={50}
+                      count={5000}
+                      factor={4}
+                      saturation={0}
+                      fade
+                      speed={1}
+                    />
+                  </Canvas>
                 </div>
               </ProtectedRoute>
             }

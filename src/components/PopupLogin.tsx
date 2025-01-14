@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Navigate } from "react-router-dom";
 
 interface PopupLoginProps {
   onLoginSuccess: (username: string) => void; // Callback for successful login
@@ -14,57 +13,71 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
   const [error, setError] = useState<string>("");
 
   // Check if the username exists
-  const checkUserExists = async () =>  {
+  const checkUserExists = async () => {
     try {
-      const response = await fetch('http://localhost:3000/check-username', {
-        method: 'POST',
+      const response = await fetch("http://localhost:3000/check-username", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username }),
       });
 
       const data = await response.json();
-      setIsUserExists(data.exists); // Update state based on the response
-      setError(""); // Clear any previous errors
+      setIsUserExists(data.exists);
+      setError("");
+
+      if (!data.exists) {
+        localStorage.setItem("possibleName", username);
+      }
     } catch (err) {
-      console.error('Error checking username:', err);
-      setError('An error occurred. Please try again.');
+      console.error("Error checking username:", err);
+      setError("An error occurred. Please try again.");
     }
   };
 
+  // Handle the login logic
   const handleLoginSubmit = async () => {
-    console.log('Submitting login with:', username, password); // Debugging
     try {
-      const response = await fetch('http://localhost:3000/login', {
-        method: 'POST',
+      const response = await fetch("http://localhost:3000/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }), 
-        credentials: 'include', 
+        body: JSON.stringify({ username, password }),
+        credentials: "include",
       });
-  
+
       if (response.ok) {
         onLoginSuccess(username);
-        alert('Login successful!');
+        alert("Login successful!");
       } else {
         const errorData = await response.json();
         setError(errorData.message);
       }
     } catch (err) {
-      console.error('Error logging in:', err);
-      setError('An error occurred. Please try again.');
+      console.error("Error logging in:", err);
+      setError("An error occurred. Please try again.");
     }
   };
-  
+
+  // Handle form submit and prevent the default form refresh
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent page refresh
+    if (isUserExists === true) {
+      handleLoginSubmit(); // Login user
+    } else {
+      checkUserExists(); // Check if user exists
+    }
+  };
+
   return (
-    <div className="text-white flex justify-center items-center w-screen h-screen bg-gray-900">
-      <form>
+    <div className="text-white flex justify-center items-center w-screen h-screen text-2xl">
+      <form onSubmit={handleFormSubmit}>
         <div className="bg-gray-800 p-8 rounded-lg space-y-4">
           {/* Username Section */}
           <div className="flex flex-col space-y-2">
-            <p className="text-[32px]">USERNAME</p>
+            <p className="text-[42px] pb-3">USERNAME</p>
             <input
               type="text"
               placeholder="Username"
@@ -83,41 +96,35 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
                 className="p-2 rounded bg-gray-700 text-white mt-4"
               />
             )}
-            
           </div>
-          {/* Next/Join Button */}
-          <button
-            onClick={(e) => {
-              e.preventDefault(); // Prevent form submission
-              if (isUserExists === true) {
-                handleLoginSubmit(); // If user exists, handle login
-              } else {
-                checkUserExists(); // If initial state, check if user exists
-              }
-            }}
-            type="button" // Use type="button" to prevent form submission
-            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 mt-4"
-          >
-            {isUserExists === true ? 'Login' : 'Next'}
-          </button>
 
-          {/* Register or Guest Login (if user does not exist) */}
+          {/* Login/Next Button */}
+          {isUserExists !== false && (
+            <button
+              type="submit" // Using type="submit" here to trigger form submission
+              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 mt-4"
+            >
+              Login
+            </button>
+          )}
+
+          {/* Register and Guest Login Buttons (if user does not exist) */}
           {isUserExists === false && (
             <>
               <button
                 onClick={(e) => {
-                  e.preventDefault(); // Prevent form submission
-                  onRegister(); 
+                  e.preventDefault();
+                  onRegister();
                 }}
                 type="button"
                 className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 mt-4"
               >
                 Register
-              </button>              
+              </button>
               <button
                 onClick={(e) => {
-                  e.preventDefault(); // Prevent form submission
-                  onGuestLogin(); 
+                  e.preventDefault();
+                  onGuestLogin();
                 }}
                 type="button"
                 className="w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 mt-4"

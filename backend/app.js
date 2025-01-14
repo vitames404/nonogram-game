@@ -79,11 +79,38 @@ app.post('/register', async (req, res) => {
     const newUser = new User({ username, password: hashedPassword, email });
     await newUser.save();
 
-    res.status(201).json({ message: 'User registered successfully', user: newUser });
+    const accessToken = jwt.sign(
+      { username: newUser.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { username: newUser.username },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Strict',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error registering user', error: err });
   }
 });
+
 
 app.post('/add-ranking', authenticateToken, async (req, res) => {
   try {
@@ -133,7 +160,7 @@ app.post('/update-highscore', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (highscore < user.highscore) {
+    if (highscore < user.highscore || user.highscore == null) {
       user.highscore = highscore;
       await user.save();
       return res.status(200).json({ message: 'High score updated successfully', highscore: user.highscore });
@@ -175,6 +202,55 @@ app.get('/get-userinfo', async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    const accessToken = jwt.sign(
+      { username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { username: user.username },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Strict',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: 'Login successful',
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Error logging in', err });
+  }
+});
+
+app.post('/login-guest', async (req, res) => {
   const { username, password } = req.body;
 
   try {

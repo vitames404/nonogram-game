@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Grid from "../components/Grid";
 import Timer from "../components/Timer";
+import { Canvas } from "@react-three/fiber";
+import { Stars } from "@react-three/drei";
 
 interface DailyChallengeProps {
   calculateHints: (grid: number[][]) => {
@@ -16,9 +18,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   const [resetTimer, setResetTimer] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [ranking, setRanking] = useState<{ username: string; time: number }[]>(
-    []
-  );
+  const [ranking, setRanking] = useState<{ username: string; time: number }[]>([]);
   const [currentTime, setCurrentTime] = useState<number>(0);
 
   // Fetch the daily challenge from the backend
@@ -31,20 +31,15 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
 
       if (!fetchResponse.ok) {
         if (fetchResponse.status === 404) {
-          const createResponse = await fetch(
-            "http://localhost:3000/create-daily",
-            {
-              method: "POST",
-            }
-          );
+          const createResponse = await fetch("http://localhost:3000/create-daily", {
+            method: "POST",
+          });
 
           if (!createResponse.ok) {
             throw new Error("Failed to create the daily challenge.");
           }
 
-          const newChallengeResponse = await fetch(
-            "http://localhost:3000/get-daily"
-          );
+          const newChallengeResponse = await fetch("http://localhost:3000/get-daily");
           if (!newChallengeResponse.ok) {
             throw new Error("Failed to fetch the newly created challenge.");
           }
@@ -56,9 +51,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
           setColHints(newPuzzle.colHints);
           setResetTimer(true);
         } else {
-          throw new Error(
-            `Failed to fetch the daily challenge. Status: ${fetchResponse.status}`
-          );
+          throw new Error(`Failed to fetch the daily challenge. Status: ${fetchResponse.status}`);
         }
       } else {
         // If fetch is successful, set the grid and hints
@@ -70,9 +63,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
       }
     } catch (error) {
       console.error("Error in fetchDailyChallenge:", error);
-      setError(
-        error instanceof Error ? error.message : "An unexpected error occurred."
-      );
+      setError(error instanceof Error ? error.message : "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -98,14 +89,14 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   };
 
   const addRanking = async () => {
-    try{
+    try {
       const response = await fetch('http://localhost:3000/add-ranking', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ time:currentTime }), 
-        credentials: 'include', 
+        body: JSON.stringify({ time: currentTime }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -113,7 +104,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
         console.error('Error adding ranking:', errorData);
       }
 
-    }catch(err){
+    } catch (err) {
       console.log(err);
     }
   }
@@ -135,56 +126,74 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   }, [ranking]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className="relative flex flex-col items-center gap-4">
-          {/* Timer */}
-          <Timer
-            resetTimer={resetTimer}
-            onResetComplete={() => setResetTimer(false)}
-            onComplete={handleTimerComplete}
+    <>
+      {/* Canvas for Stars */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-gray-900">
+        <Canvas>
+          <Stars
+            radius={100}
+            depth={50}
+            count={5000}
+            factor={4}
+            saturation={0}
+            fade
+            speed={1}
           />
+        </Canvas>
+      </div>
 
-          {/* Display loading or error */}
-          {loading && <p className="text-xl text-center">Loading...</p>}
-          {error && <p className="text-red-500 text-center">{error}</p>}
-
-          {/* Grid */}
-          {!loading && !error && (
-            <Grid
-              grid={grid}
-              rowHints={rowHints}
-              colHints={colHints}
-              calculateHints={calculateHints}
-              winCallBack={handleWin}
+      {/* Main Content */}
+      <div className="flex flex-col min-h-screen text-white relative z-10">
+        <main className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="relative flex flex-col items-center gap-4">
+            {/* Timer */}
+            <Timer
+              resetTimer={resetTimer}
+              onResetComplete={() => setResetTimer(false)}
+              onComplete={handleTimerComplete}
             />
-          )}
 
-          {/* Ranking List */}
-          {!loading && ranking.length > 0 && (
-            <div className="mt-6 w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold text-center mb-4">Rankings</h2>
-              <ul>
-                {ranking.map((entry, index) => (
-                  <li
-                    key={index}
-                    className="flex justify-between items-center bg-gray-700 p-2 rounded-md mb-2"
-                  >
-                    <span className="font-medium">{entry.username}</span>
-                    <span className="text-sm text-gray-400">{entry.time} seconds</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {/* Display loading or error */}
+            {loading && <p className="text-xl text-center">Loading...</p>}
+            {error && <p className="text-red-500 text-center">{error}</p>}
 
-          {/* No rankings available */}
-          {!loading && ranking.length === 0 && (
-            <p className="mt-6 text-gray-500 text-center">No rankings available yet.</p>
-          )}
-        </div>
-      </main>
-    </div>
+            {/* Grid */}
+            {!loading && !error && (
+              <Grid
+                grid={grid}
+                rowHints={rowHints}
+                colHints={colHints}
+                calculateHints={calculateHints}
+                winCallBack={handleWin}
+              />
+            )}
+
+            {/* Ranking List */}
+            {!loading && ranking.length > 0 && (
+              <div className="mt-6 w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 className="text-xl font-bold text-center mb-4">Rankings</h2>
+                <ul>
+                  {ranking.map((entry, index) => (
+                    <li
+                      key={index}
+                      className="flex justify-between items-center bg-gray-700 p-2 rounded-md mb-2"
+                    >
+                      <span className="font-medium">{entry.username}</span>
+                      <span className="text-sm text-gray-400">{entry.time} seconds</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* No rankings available */}
+            {!loading && ranking.length === 0 && (
+              <p className="mt-6 text-gray-500 text-center">No rankings available yet.</p>
+            )}
+          </div>
+        </main>
+      </div>
+    </>
   );
 };
 
