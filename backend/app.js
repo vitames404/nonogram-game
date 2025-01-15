@@ -133,14 +133,14 @@ app.post('/login-guest', async (req, res) => {
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'Strict',
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'Strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -250,7 +250,6 @@ app.post('/add-ranking', authenticateToken, async (req, res) => {
     if (!token) {
       return res.status(400).json({ message: 'Access token missing' });
     }
-
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const username = decoded.username;
@@ -371,14 +370,14 @@ app.post('/login', async (req, res) => {
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'Strict',
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'Strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -420,14 +419,14 @@ app.post('/login-guest', async (req, res) => {
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'Strict',
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'Strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
