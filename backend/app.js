@@ -44,7 +44,12 @@ const authenticateToken = (req, res, next) => {
   if (!token) return res.status(401).json({ message: 'Access Token missing' });
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid Access Token' });
+    if (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Access Token expired' });
+      }
+      return res.status(403).json({ message: 'Invalid Access Token' });
+    }
     req.user = user;
     next();
   });
@@ -57,6 +62,27 @@ app.post('/check-username', async (req, res) => {
     res.status(200).json({ exists: !!existingUser });
   } catch (err) {
     res.status(500).json({ message: 'Error searching for username', error: err });
+  }
+});
+
+app.post('/user-played', authenticateToken, async (req, res) => {
+  try {
+    const username = req.user.username; // Use the user from the middleware
+
+    // Find the user and update the `alreadyPlayed` field
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.alreadyPlayed = true;
+    await user.save(); // Save the updated user document
+
+    res.status(201).json({ message: 'User updated successfully' });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating user', error: err.message });
   }
 });
 

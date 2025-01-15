@@ -88,6 +88,23 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
     setCurrentTime(timeTaken);
   };
 
+  const updateUser = () => {
+
+    try{
+      const response = fetch('http://localhost:3000/user-played',{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+    }catch(err){  
+      console.log(err);
+    }
+
+  }
+
   const addRanking = async () => {
     try {
       const response = await fetch('http://localhost:3000/add-ranking', {
@@ -113,6 +130,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
     alert("You won the DAILY MODE mode!");
     fetchRanking();
     addRanking();
+    updateUser();
   };
 
   useEffect(() => {
