@@ -242,9 +242,15 @@ app.post('/add-ranking', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Access token missing' });
     }
 
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const username = decoded.username;
     const date = new Date(); // Save the current date as a Date object
+
+    await User.findOneAndUpdate(
+      { username },
+      { lastActive: Date.now() }
+    );  
 
     // Update the existing ranking or insert a new one
     const updatedRanking = await Ranking.findOneAndUpdate(
