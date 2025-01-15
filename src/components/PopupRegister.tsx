@@ -4,14 +4,14 @@ interface PopupRegisterProps {
   onRegisterSuccess: () => void; // Callback for successful registration
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
 const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
-
+  
+  const API_BASE_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:3000';
   // Populate username from localStorage
   useEffect(() => {
     const storedUsername = localStorage.getItem("possibleName");

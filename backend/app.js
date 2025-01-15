@@ -238,12 +238,6 @@ app.post('/add-ranking', authenticateToken, async (req, res) => {
     const { time } = req.body;
     const token = req.cookies?.accessToken;
 
-    // Update the user's lastActive timestamp
-    await User.findOneAndUpdate(
-      { username },
-      { lastActive: Date.now() }
-    );
-
     if (!token) {
       return res.status(400).json({ message: 'Access token missing' });
     }

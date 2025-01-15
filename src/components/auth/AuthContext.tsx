@@ -18,12 +18,12 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true); // New loading state
-
+  const API_BASE_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:3000';
+  
   const checkAuthentication = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/protected`, {

@@ -6,14 +6,15 @@ interface PopupLoginProps {
   onGuestLogin: () => void;  
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
 const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onGuestLogin }) => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [isUserExists, setIsUserExists] = useState<boolean | null>(null);
   const [error, setError] = useState<string>("");
-
+  
+  const API_BASE_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:3000';
+  
   // Check if the username exists
   const checkUserExists = async () => {
     try {
