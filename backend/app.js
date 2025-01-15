@@ -14,7 +14,7 @@ require('dotenv').config();
 
 const app = express();
 
-var whitelist = ['https://nonogram404.onrender.com']
+var whitelist = ['nonogram404.onrender.com']
 
 var corsOptions = {
   origin: function (origin, callback) {
@@ -29,6 +29,8 @@ var corsOptions = {
 };
 
 app.use(cors(corsOptions));
+// Optionally, handle preflight requests for all routes
+app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
