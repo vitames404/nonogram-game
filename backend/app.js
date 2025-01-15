@@ -28,9 +28,6 @@ var corsOptions = {
   credentials: true, // If you need cookies or authentication
 };
 
-app.use(cors(corsOptions));
-// Optionally, handle preflight requests for all routes
-app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
