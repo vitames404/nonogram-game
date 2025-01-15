@@ -17,19 +17,8 @@ const app = express();
 const allowedOrigins = ['https://nonogram404.onrender.com', 'http://localhost:5173'];
 
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps, Postman)
-    if (!origin) return callback(null, true);
-
-    // Check if the origin is in the allowed list
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    // Block the request
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true, // Allow credentials (cookies)
+  origin: '*', // Allow all origins for testing, but be more restrictive in production
+  credentials: true,
 }));
 
 app.use(express.json());
