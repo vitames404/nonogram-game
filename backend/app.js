@@ -15,7 +15,7 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'https://nonogram404.onrender.com'],
   credentials: true,
 }));
 
