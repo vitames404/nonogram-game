@@ -30,6 +30,8 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
     return `${minutes}m${String(seconds).padStart(2, "0")}s`; // Format as MM:SS
   };
 
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
   // Fetch the alreadyPlayed status from the backend
   const fetchAlreadyPlayed = async () => {
     try {
@@ -71,11 +73,11 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
       setLoading(true);
       setError(null);
 
-      const fetchResponse = await fetch("http://localhost:3000/get-daily");
+      const fetchResponse = await fetch(`${API_BASE_URL}/get-daily`);
 
       if (!fetchResponse.ok) {
         if (fetchResponse.status === 404) {
-          const createResponse = await fetch("http://localhost:3000/create-daily", {
+          const createResponse = await fetch(`${API_BASE_URL}/create-daily`, {
             method: "POST",
           });
 
@@ -83,7 +85,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
             throw new Error("Failed to create the daily challenge.");
           }
 
-          const newChallengeResponse = await fetch("http://localhost:3000/get-daily");
+          const newChallengeResponse = await fetch(`${API_BASE_URL}/get-daily`);
           if (!newChallengeResponse.ok) {
             throw new Error("Failed to fetch the newly created challenge.");
           }
@@ -115,7 +117,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
 
   const fetchRanking = async () => {
     try {
-      const response = await fetch("http://localhost:3000/fetch-ranking", {
+      const response = await fetch(`${API_BASE_URL}/fetch-ranking`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -136,7 +138,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
 
   const updateUser = async () => {
     try {
-      const response = await fetch('http://localhost:3000/user-played', {
+      const response = await fetch(`${API_BASE_URL}/user-played`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +156,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
 
   const addRanking = async () => {
     try {
-      const response = await fetch('http://localhost:3000/add-ranking', {
+      const response = await fetch(`${API_BASE_URL}/add-ranking`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,10 +173,6 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
       console.error("Error in addRanking:", err);
     }
   };
-
-  const redirectNormalGame = () => {
-    console.log("teste");
-  }
 
   const handleWin = () => {
     alert("You won the DAILY MODE mode!");

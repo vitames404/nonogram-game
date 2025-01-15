@@ -1,23 +1,34 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import PopupLogin from "../components/PopupLogin";
 import PopupRegister from "../components/PopupRegister";
 import { Navigate } from "react-router-dom";
 import Title from "../components/Title";
 import { Canvas } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
+import { useAuth } from "../components/auth/AuthContext"; // Import useAuth
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
 const Login = () => {
   const [state, setState] = useState<number>(1); // 1: Login, 2: Register, 3: Guest
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  const { isAuthenticated, loading } = useAuth(); // Add checkAuthentication
+
+  // Redirect to the game page if already authenticated
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      setRedirectTo("/");
+    }
+  }, [isAuthenticated, loading]);
 
   // Handle successful login
   const handleLoginSuccess = () => {
-    setRedirectTo("/"); // Redirect to the game page
+    window.location.href = "/";
   };
 
   // Handle successful registration
   const handleRegisterSuccess = () => {
-    setRedirectTo("/");
+    window.location.href = "/";
   };
 
   // Handle guest login
@@ -25,7 +36,7 @@ const Login = () => {
     try {
       const username = `guest_${Math.random().toString(36).substring(7)}`; // Generate a random username for the guest
 
-      const response = await fetch("http://localhost:3000/login-guest", {
+      const response = await fetch(`${API_BASE_URL}/login-guest`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -35,7 +46,8 @@ const Login = () => {
       });
 
       if (response.ok) {
-        setRedirectTo("/"); // Redirect to the game page
+        setRedirectTo("/");
+        window.location.href = "/"; // Redirect to the game page
       } else {
         console.error("Failed to login as guest");
       }

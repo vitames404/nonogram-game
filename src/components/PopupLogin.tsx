@@ -6,6 +6,8 @@ interface PopupLoginProps {
   onGuestLogin: () => void;  
 }
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
 const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onGuestLogin }) => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -37,29 +39,29 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
   };
 
   // Handle the login logic
-  const handleLoginSubmit = async () => {
-    try {
-      const response = await fetch("http://localhost:3000/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-        credentials: "include",
-      });
+const handleLoginSubmit = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+      credentials: "include",
+    });
 
-      if (response.ok) {
-        onLoginSuccess(username);
-        alert("Login successful!");
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message);
-      }
-    } catch (err) {
-      console.error("Error logging in:", err);
-      setError("An error occurred. Please try again.");
+    if (response.ok) {
+      onLoginSuccess(username); // Ensure this is called
+      alert("Login successful!");
+    } else {
+      const errorData = await response.json();
+      setError(errorData.message);
     }
-  };
+  } catch (err) {
+    console.error("Error logging in:", err);
+    setError("An error occurred. Please try again.");
+  }
+};
 
   // Handle form submit and prevent the default form refresh
   const handleFormSubmit = (e: React.FormEvent) => {

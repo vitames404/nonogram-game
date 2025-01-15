@@ -4,6 +4,8 @@ interface PopupRegisterProps {
   onRegisterSuccess: () => void; // Callback for successful registration
 }
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
 const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -25,7 +27,7 @@ const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
       const payload = { username, password, email }; // Include email only if it exists
       console.log("Sending payload:", payload); // Debugging line
   
-      const response = await fetch('http://localhost:3000/register', {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

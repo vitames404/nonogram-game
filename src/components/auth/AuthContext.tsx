@@ -18,13 +18,15 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true); // New loading state
 
   const checkAuthentication = async () => {
     try {
-      const response = await fetch("http://localhost:3000/protected", {
+      const response = await fetch(`${API_BASE_URL}/protected`, {
         method: "GET",
         credentials: "include",
       });
@@ -32,7 +34,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         setIsAuthenticated(true);
       } else if (response.status === 401 || response.status === 403) {
-        const refreshResponse = await fetch("http://localhost:3000/refresh-token", {
+        const refreshResponse = await fetch(`${API_BASE_URL}/refresh-token`, {
           method: "POST",
           credentials: "include",
         });

@@ -44,6 +44,8 @@ const App: React.FC = () => {
     setResetTimer(true);
   };
 
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
   const formatTime = (centiseconds: number): void => {
     const minutes = Math.floor((centiseconds / 100) / 60);
     const seconds = Math.floor((centiseconds / 100) % 60);
@@ -88,7 +90,7 @@ const App: React.FC = () => {
 
   const getHighscore = async () => {
     try {
-      const response = await fetch('http://localhost:3000/get-userinfo', {
+      const response = await fetch(`${API_BASE_URL}/get-userinfo`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +107,7 @@ const App: React.FC = () => {
 
   const updateHS = async () => {
     try {
-      const response = await fetch('http://localhost:3000/update-highscore', {
+      const response = await fetch(`${API_BASE_URL}/update-highscore`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,13 +129,13 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:3000/logout', {
+      const response = await fetch(`${API_BASE_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });
 
       if (response.ok) {
-        window.location.reload(); // Redirect to the login page
+        window.location.href = "/home";  // Redirect to the login page
       } else {
         console.error('Failed to logout');
       }
@@ -165,6 +167,7 @@ const App: React.FC = () => {
             path="/"
             element={
               <ProtectedRoute>
+                <>
                 <div className="flex flex-col min-h-screen relative z-10 text-white">
                   <main className="flex-1 flex flex-col items-center justify-center p-4">
                     <div className="relative flex flex-col items-center gap-4">
@@ -218,6 +221,7 @@ const App: React.FC = () => {
                     />
                   </Canvas>
                 </div>
+                </>
               </ProtectedRoute>
             }
           />
