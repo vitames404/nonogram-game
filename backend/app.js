@@ -14,12 +14,19 @@ require('dotenv').config();
 
 const app = express();
 
-const allowedOrigins = ['https://nonogram404.onrender.com', 'http://localhost:5173'];
+const whitelist = ["http://localhost:3000", 'https://nonogram404.onrender.com']; 
 
-app.use(cors({
-  origin: '*', // Allow all origins for testing, but be more restrictive in production
-  credentials: true,
-}));
+const corsOptions = { 
+    origin: (origin, callback) => { 
+        if (!origin || whitelist.includes(origin)) { 
+            callback(null, true); 
+        } else { 
+            callback(new Error("Not allowed by CORS")); 
+        } 
+    }, 
+    credentials: true, 
+}; 
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
