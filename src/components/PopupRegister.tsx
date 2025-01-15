@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
 
 interface PopupRegisterProps {
   onRegisterSuccess: () => void; // Callback for successful registration
@@ -21,23 +20,26 @@ const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
 
   // Handle registration submission
   const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
     try {
+      const payload = { username, password, email }; // Include email only if it exists
+      console.log("Sending payload:", payload); // Debugging line
+  
       const response = await fetch('http://localhost:3000/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify(payload),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
-        onRegisterSuccess(); // Notify parent component of successful registration
+        onRegisterSuccess();
       } else {
-        setError(data.message); // Display error message
+        setError(data.message);
       }
     } catch (err) {
       console.error('Error registering user:', err);
@@ -71,7 +73,6 @@ const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="p-2 rounded bg-gray-700 text-white"
-              required
             />
           </div>
 

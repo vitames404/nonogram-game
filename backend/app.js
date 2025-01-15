@@ -7,6 +7,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const cron = require('node-cron');
+const crypto = require('crypto');
 
 require('dotenv').config();
 
@@ -16,6 +18,7 @@ app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -34,7 +37,19 @@ mongoose
   .catch((err) => {
     console.error('Error connecting to MongoDB:', err);
   });
-
+  
+  // Schedule the cleanup task to run every day at midnight
+  cron.schedule('0 0 * * *', () => {
+    console.log('Running cleanup task...');
+    deleteInactiveGuests();
+  });
+  
+  const generateSecurePassword = (length = 16) => {
+    return crypto
+      .randomBytes(length)
+      .toString('hex')
+      .slice(0, length);
+  };
 const generateAccessToken = (user) => {
   return jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '15m' });
 };
@@ -55,6 +70,82 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+const deleteInactiveGuests = async () => {
+  try {
+    const inactivityThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+    const result = await User.deleteMany({
+      guest: true,
+      lastActive: { $lt: inactivityThreshold },
+    });
+
+    console.log(`Deleted ${result.deletedCount} inactive guest users.`);
+  } catch (err) {
+    console.error('Error deleting inactive guest users:', err);
+  }
+};
+
+
+
+app.post('/login-guest', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    // Check if the username already exists
+    let user = await User.findOne({ username });
+
+    if (!user) {
+      // Generate a secure password for the guest user
+      const securePassword = generateSecurePassword();
+      const hashedPassword = await bcrypt.hash(securePassword, 10);
+
+      // Create a new guest user with the secure password
+      user = new User({
+        username,
+        password: hashedPassword,
+        guest: true,
+        lastActive: Date.now(),
+      });
+      await user.save();
+    } else if (!user.guest) {
+      return res.status(400).json({ message: 'Username already taken by a regular user' });
+    }
+
+    const accessToken = jwt.sign(
+      { username: user.username, guest: true },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { username: user.username, guest: true },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Strict',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: 'Guest login successful',
+    });
+
+  } catch (err) {
+    console.error('Error in /login-guest:', err);
+    res.status(500).json({ message: 'Error logging in as guest', error: err.message });
+  }
+});
+
 app.post('/check-username', async (req, res) => {
   try {
     const { username } = req.body;
@@ -65,9 +156,28 @@ app.post('/check-username', async (req, res) => {
   }
 });
 
+app.get('/get-dailyConditions', authenticateToken, async (req, res) => {
+  try {
+    const username = req.user.username;
+
+    // Find the user
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return the alreadyPlayed status
+    res.status(200).json({ alreadyPlayed: user.alreadyPlayed, guest: user.guest });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Error searching for username', error: err });
+  }
+});
+
 app.post('/user-played', authenticateToken, async (req, res) => {
   try {
-    const username = req.user.username; // Use the user from the middleware
+    const username = req.user.username; 
 
     // Find the user and update the `alreadyPlayed` field
     const user = await User.findOne({ username });
@@ -90,50 +200,35 @@ app.post('/register', async (req, res) => {
   try {
     const { username, password, email } = req.body;
 
+    // Check if the username already exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
-      return res.status(400).json({ message: 'Email already exists' });
+    // Check if the email is provided and if it already exists
+    if (email && email.trim() !== "") {
+      const existingEmail = await User.findOne({ email });
+      if (existingEmail) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
     }
 
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({ username, password: hashedPassword, email });
+    // Create a new user (email is optional)
+    const newUser = new User({
+      username,
+      password: hashedPassword,
+      email: email || null, // Set email to null if not provided
+    });
     await newUser.save();
-
-    const accessToken = jwt.sign(
-      { username: newUser.username },
-      process.env.JWT_SECRET,
-      { expiresIn: '15m' }
-    );
-
-    const refreshToken = jwt.sign(
-      { username: newUser.username },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Strict',
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
 
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Error registering user', error: err });
+    console.error('Error registering user:', err);
+    res.status(500).json({ message: 'Error registering user', error: err.message });
   }
 });
 
@@ -142,6 +237,12 @@ app.post('/add-ranking', authenticateToken, async (req, res) => {
   try {
     const { time } = req.body;
     const token = req.cookies?.accessToken;
+
+    // Update the user's lastActive timestamp
+    await User.findOneAndUpdate(
+      { username },
+      { lastActive: Date.now() }
+    );
 
     if (!token) {
       return res.status(400).json({ message: 'Access token missing' });
@@ -179,6 +280,12 @@ app.get('/fetch-ranking', async (req, res) => {
 app.post('/update-highscore', authenticateToken, async (req, res) => {
   const { highscore } = req.body;
   const username = req.user.username;
+
+  // Update the user's lastActive timestamp
+  await User.findOneAndUpdate(
+    { username },
+    { lastActive: Date.now() }
+  );
 
   try {
     const user = await User.findOne({ username });

@@ -17,11 +17,31 @@ const Login = () => {
 
   // Handle successful registration
   const handleRegisterSuccess = () => {
-    setRedirectTo("/"); 
+    setRedirectTo("/");
   };
 
-  const handleGuestLogin = () => {
-    setRedirectTo("/"); 
+  // Handle guest login
+  const handleGuestLogin = async () => {
+    try {
+      const username = `guest_${Math.random().toString(36).substring(7)}`; // Generate a random username for the guest
+
+      const response = await fetch("http://localhost:3000/login-guest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username }),
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setRedirectTo("/"); // Redirect to the game page
+      } else {
+        console.error("Failed to login as guest");
+      }
+    } catch (err) {
+      console.error("Error during guest login:", err);
+    }
   };
 
   // If redirectTo is set, render the Navigate component
@@ -31,32 +51,34 @@ const Login = () => {
 
   return (
     <>
-    {/* Canvas for Stars */}
-    <div className="fixed inset-0 z-0 pointer-events-none bg-gray-900">
-      <Canvas>
-        <Stars
-          radius={100}
-          depth={50}
-          count={5000}
-          factor={4}
-          saturation={0}
-          fade
-          speed={1}
-        />
-      </Canvas>
-    </div>
-    <div className="font-vt323 relative z-10">
+      {/* Canvas for Stars */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-gray-900">
+        <Canvas>
+          <Stars
+            radius={100}
+            depth={50}
+            count={5000}
+            factor={4}
+            saturation={0}
+            fade
+            speed={1}
+          />
+        </Canvas>
+      </div>
+      <div className="font-vt323 relative z-10">
         <Title />
         {state === 1 && (
           <PopupLogin
             onLoginSuccess={handleLoginSuccess}
             onRegister={() => setState(2)}
-            onGuestLogin={handleGuestLogin} />
+            onGuestLogin={handleGuestLogin}
+          />
         )}
         {state === 2 && (
           <PopupRegister onRegisterSuccess={handleRegisterSuccess} />
         )}
-      </div></>
+      </div>
+    </>
   );
 };
 

@@ -7,6 +7,8 @@ import DailyChallenge from "./pages/DailyChallenge.tsx";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./components/auth/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Logout from "pixelarticons/svg/logout.svg";
+import HowToPlayPopup from "./components/HowtoPlayPopup.tsx";
 
 import {Canvas} from "@react-three/fiber";
 import {Stars} from "@react-three/drei";
@@ -16,6 +18,7 @@ const App: React.FC = () => {
   const [rowHints, setRowHints] = useState<number[][]>([]);
   const [colHints, setColHints] = useState<number[][]>([]);
   const [resetTimer, setResetTimer] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false); // State for popup visibility
   const [highScore, setHighScore] = useState<number>(0);
   const [highscorePrint, setHighscorePrint] = useState<string>("0:00:00");
   const [username, setUsername] = useState<string>("Loading...")
@@ -122,6 +125,23 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        window.location.reload(); // Redirect to the login page
+      } else {
+        console.error('Failed to logout');
+      }
+    } catch (err) {
+      console.error('Error during logout:', err);
+    }
+  };
+
   const handleWin = async () => {
     alert("You won lmaoo");
     getHighscore();
@@ -130,8 +150,6 @@ const App: React.FC = () => {
       updateHS();
       alert("New Highscore!!");
     }
-
-    generateGame();
   };
 
   const handleTimerComplete = (timeTaken: number) => {
@@ -163,17 +181,30 @@ const App: React.FC = () => {
                         winCallBack={handleWin}
                       />
                       <div className="flex gap-2 mt-4">
-                        <Buttons onClick={generateGame} />
+                      <Buttons
+                        onClick={generateGame} // Existing function for the repeat button
+                        onHowToPlayClick={() => setShowHowToPlay(true)} // Function to show the popup
+                      />
                       </div>
                     </div>
-                    <div className="font-vt323 text-2xl hidden md:block fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 p-4 rounded-lg shadow-lg md:absolute md:left-auto md:right-4 md:transform-none">
+                    <div className="font-vt323 text-2xl hidden md:block top-5 left-1/2 transform -translate-x-1/2 bg-gray-800 p-4 rounded-lg shadow-lg md:absolute md:left-auto md:right-4 md:transform-none relative">
                       <h3 className="text-3xl font-bold">User Info</h3>
                       <p>Name: {username}</p>
-                      <p>High Score: {highscorePrint}</p>
+                      <p>Lowest time: {highscorePrint}</p>
+                      <button 
+                        onClick={handleLogout} 
+                        className="absolute top-2 right-2 p-[5px] rounded-md text-black bg-gray-100"
+                      >
+                        <img src={Logout} alt="Repeat" className="max-w-[20px] max-h-[20px] h-[8vw]" />
+                      </button>
+                      {/* How to Play Popup */}
+                      {showHowToPlay && (
+                        <HowToPlayPopup isVisible={showHowToPlay} onClose={() => setShowHowToPlay(false)} />
+                      )}
                     </div>
                   </main>
                 </div>
-                                {/* Canvas for Stars */}
+                {/* Canvas for Stars */}
                 <div className="fixed inset-0 z-0 pointer-events-none bg-gray-900">
                   <Canvas>
                     <Stars

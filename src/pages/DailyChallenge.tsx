@@ -3,6 +3,7 @@ import Grid from "../components/Grid";
 import Timer from "../components/Timer";
 import { Canvas } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
+import DailyChallengeButtons from "../components/DailyChallengeButtons";
 
 interface DailyChallengeProps {
   calculateHints: (grid: number[][]) => {
@@ -20,6 +21,49 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   const [error, setError] = useState<string | null>(null);
   const [ranking, setRanking] = useState<{ username: string; time: number }[]>([]);
   const [currentTime, setCurrentTime] = useState<number>(0);
+  const [alreadyPlayed, setAlreadyPlayed] = useState<boolean>(false);
+
+  // Helper function to format time in MM:SS format
+  const formatTime = (timeInSeconds: number): string => {
+    const minutes = Math.floor(timeInSeconds / 60); // Convert seconds to minutes
+    const seconds = timeInSeconds % 60; // Get the remaining seconds
+    return `${minutes}m${String(seconds).padStart(2, "0")}s`; // Format as MM:SS
+  };
+
+  // Fetch the alreadyPlayed status from the backend
+  const fetchAlreadyPlayed = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/get-dailyConditions", {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch alreadyPlayed status.");
+      }
+
+      const { alreadyPlayed, guest } = await response.json();
+      setAlreadyPlayed(alreadyPlayed);
+
+      if (alreadyPlayed) {
+        setError("You can only play once a day >:(");
+        setLoading(false);
+        return;
+      }
+
+      if(guest){
+        setError("You can´t see this as a guest, create an account :|");
+        setLoading(false);
+        return;
+      }
+
+      // If the user hasn't played yet, fetch the daily challenge
+      fetchDailyChallenge();
+    } catch (error) {
+      console.error("Error in fetchAlreadyPlayed:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred.");
+      setLoading(false);
+    }
+  };
 
   // Fetch the daily challenge from the backend
   const fetchDailyChallenge = async () => {
@@ -85,13 +129,14 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   };
 
   const handleTimerComplete = (timeTaken: number) => {
+    console.log("Time taken (centiseconds):", timeTaken);
+    console.log("Time taken (seconds):", timeTaken / 100);
     setCurrentTime(timeTaken);
   };
 
-  const updateUser = () => {
-
-    try{
-      const response = fetch('http://localhost:3000/user-played',{
+  const updateUser = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/user-played', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,11 +144,13 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
         credentials: 'include',
       });
 
-    }catch(err){  
-      console.log(err);
+      if (!response.ok) {
+        throw new Error("Failed to update user.");
+      }
+    } catch (err) {
+      console.error("Error in updateUser:", err);
     }
-
-  }
+  };
 
   const addRanking = async () => {
     try {
@@ -112,7 +159,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ time: currentTime }),
+        body: JSON.stringify({ time: currentTime / 100 }), // Convert to seconds
         credentials: 'include',
       });
 
@@ -120,10 +167,13 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
         const errorData = await response.json();
         console.error('Error adding ranking:', errorData);
       }
-
     } catch (err) {
-      console.log(err);
+      console.error("Error in addRanking:", err);
     }
+  };
+
+  const redirectNormalGame = () => {
+    console.log("teste");
   }
 
   const handleWin = () => {
@@ -134,7 +184,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   };
 
   useEffect(() => {
-    fetchDailyChallenge();
+    fetchAlreadyPlayed();
     fetchRanking();
   }, []);
 
@@ -144,7 +194,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   }, [ranking]);
 
   return (
-    <>
+    <div className="font-vt323">
       {/* Canvas for Stars */}
       <div className="fixed inset-0 z-0 pointer-events-none bg-gray-900">
         <Canvas>
@@ -172,11 +222,11 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
             />
 
             {/* Display loading or error */}
-            {loading && <p className="text-xl text-center">Loading...</p>}
-            {error && <p className="text-red-500 text-center">{error}</p>}
+            {loading && <p className="text-2xl text-center">Loading...</p>}
+            {error && <p className="text-red-500 text-center text-3xl">{error}</p>}
 
             {/* Grid */}
-            {!loading && !error && (
+            {!loading && !error && !alreadyPlayed && (
               <Grid
                 grid={grid}
                 rowHints={rowHints}
@@ -186,18 +236,23 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
               />
             )}
 
+            {/* Buttons */}
+            <DailyChallengeButtons/>
+
             {/* Ranking List */}
             {!loading && ranking.length > 0 && (
               <div className="mt-6 w-full max-w-md bg-gray-800 p-4 rounded-lg shadow-lg">
-                <h2 className="text-xl font-bold text-center mb-4">Rankings</h2>
-                <ul>
+                <h2 className="font-bold text-center text-3xl mb-4">Rankings</h2>
+                <ul className="text-2xl">
                   {ranking.map((entry, index) => (
                     <li
                       key={index}
                       className="flex justify-between items-center bg-gray-700 p-2 rounded-md mb-2"
                     >
                       <span className="font-medium">{entry.username}</span>
-                      <span className="text-sm text-gray-400">{entry.time} seconds</span>
+                      <span className="text-1xl text-gray-400">
+                        {formatTime(entry.time)} {/* Format the time here */}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -206,12 +261,12 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
 
             {/* No rankings available */}
             {!loading && ranking.length === 0 && (
-              <p className="mt-6 text-gray-500 text-center">No rankings available yet.</p>
+              <p className="mt-6 text-gray-500 text-center text-3xl">No rankings available yet.</p>
             )}
           </div>
         </main>
       </div>
-    </>
+    </div>
   );
 };
 
