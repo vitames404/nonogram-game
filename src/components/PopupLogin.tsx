@@ -18,7 +18,7 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
   // Check if the username exists
   const checkUserExists = async () => {
     try {
-      const response = await fetch("http://localhost:3000/check-username", {
+      const response = await fetch(`${API_BASE_URL}/check-username`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
