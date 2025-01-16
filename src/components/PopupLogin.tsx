@@ -13,7 +13,7 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
   const [isUserExists, setIsUserExists] = useState<boolean | null>(null);
   const [error, setError] = useState<string>("");
   
-  const API_BASE_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:3000';
+  const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000';
 
   console.log(API_BASE_URL);
 
