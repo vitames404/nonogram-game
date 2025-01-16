@@ -12,7 +12,7 @@ const Login = () => {
   const [state, setState] = useState<number>(1); // 1: Login, 2: Register, 3: Guest
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
   const { isAuthenticated, loading } = useAuth(); // Add checkAuthentication
-  const API_BASE_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:3000';
+  const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000';
 
   // Redirect to the game page if already authenticated
   useEffect(() => {

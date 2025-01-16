@@ -30,7 +30,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
     return `${minutes}m${String(seconds).padStart(2, "0")}s`; // Format as MM:SS
   };
 
-  const API_BASE_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:3000';
+  const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000';
 
   // Fetch the alreadyPlayed status from the backend
   const fetchAlreadyPlayed = async () => {
