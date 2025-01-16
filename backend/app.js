@@ -14,10 +14,10 @@ require('dotenv').config();
 
 const app = express();
 
-var corsOptions = {
-  origin: "*",
-  methods: ["GET", "POST"],  // Add other methods if necessary
-  credentials: false, 
+const corsOptions = {
+  origin: ["https://vitames-website.onrender.com"], // Substitua pelo domínio do seu frontend
+  methods: ["GET", "POST"],
+  credentials: true, // Caso necessário para cookies ou autenticação
 };
 
 app.use(cors(corsOptions));
