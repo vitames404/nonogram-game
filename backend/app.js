@@ -15,11 +15,15 @@ require('dotenv').config();
 const app = express();
 
 const corsOptions = {
-  origin: ["https://nonogram404.onrender.com/"], // Substitua pelo domínio do seu frontend
-  methods: ["GET", "POST"],
-  credentials: true, // Caso necessário para cookies ou autenticação
+  origin: 'https://nonogram404.onrender.com', // Allow the specific origin
+  methods: ['GET', 'POST', 'OPTIONS'], // Allowed HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
+  credentials: true, // Allow cookies and credentials
 };
 
+app.use(cors(corsOptions));
+
+app.options('*', cors(corsOptions)); // Preflight requests
 
 app.use(cors(corsOptions));
 app.use(express.json());
