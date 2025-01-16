@@ -14,20 +14,13 @@ require('dotenv').config();
 
 const app = express();
 
-var whitelist = ['nonogram404.onrender.com']
-
 var corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: "*",
   methods: ["GET", "POST"],  // Add other methods if necessary
-  credentials: true, // If you need cookies or authentication
+  credentials: false, 
 };
 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -314,7 +307,7 @@ app.post('/update-highscore', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/get-userinfo', async (req, res) => {
+app.get('/get-userinfo', authenticateToken, async (req, res) => {
   const token = req.cookies?.accessToken;
 
   if (!token) {
