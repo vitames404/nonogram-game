@@ -15,10 +15,11 @@ require('dotenv').config();
 const app = express();
 
 const corsOptions = {
-  origin: ["https://vitames-website.onrender.com"], // Substitua pelo domínio do seu frontend
+  origin: ["https://nonogram404.onrender.com/"], // Substitua pelo domínio do seu frontend
   methods: ["GET", "POST"],
   credentials: true, // Caso necessário para cookies ou autenticação
 };
+
 
 app.use(cors(corsOptions));
 app.use(express.json());
