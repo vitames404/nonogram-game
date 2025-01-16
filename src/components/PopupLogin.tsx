@@ -14,7 +14,9 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
   const [error, setError] = useState<string>("");
   
   const API_BASE_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:3000';
-  
+
+  console.log(API_BASE_URL);
+
   // Check if the username exists
   const checkUserExists = async () => {
     try {
@@ -40,16 +42,16 @@ const PopupLogin: React.FC<PopupLoginProps> = ({ onLoginSuccess, onRegister, onG
   };
 
   // Handle the login logic
-const handleLoginSubmit = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, password }),
-      credentials: "include",
-    });
+  const handleLoginSubmit = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+        credentials: "include",
+      });
 
     if (response.ok) {
       onLoginSuccess(username); // Ensure this is called
