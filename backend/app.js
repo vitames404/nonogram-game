@@ -5,6 +5,7 @@ const Ranking = require('./models/Ranking');
 const DailyPuzzle = require('./models/DailyPuzzle');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const cron = require('node-cron');
