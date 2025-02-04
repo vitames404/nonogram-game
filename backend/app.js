@@ -83,18 +83,6 @@ const deleteInactiveGuests = async () => {
   }
 };
 
-// Serve os arquivos estáticos do React
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Rota de fallback para servir o index.html
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
-});
-
 app.post('/login-guest', async (req, res) => {
   const { username } = req.body;
 
@@ -557,6 +545,14 @@ app.get('/get-daily', async (req, res) => {
       error: err.message,
     });
   }
+});
+
+// Serve os arquivos estáticos do React
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Rota de fallback para servir o index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {
