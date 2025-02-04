@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+    "postbuild": "cp -r ../dist ./dist/public"
   },
   "keywords": [],
   "author": "",
