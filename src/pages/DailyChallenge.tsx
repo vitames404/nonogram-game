@@ -35,7 +35,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   // Fetch the alreadyPlayed status from the backend
   const fetchAlreadyPlayed = async () => {
     try {
-      const response = await fetch("http://localhost:3000/get-dailyConditions", {
+      const response = await fetch(`${API_BASE_URL}/get-dailyConditions`, {
         credentials: 'include',
       });
 
