@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const path = require('path');
 const User = require('./models/User');
 const Ranking = require('./models/Ranking');
 const DailyPuzzle = require('./models/DailyPuzzle');
@@ -22,13 +23,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
 app.options('*', cors(corsOptions)); // Preflight requests
-
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser());
 
 const port = 3000;
@@ -43,12 +41,6 @@ mongoose
   })
   .catch((err) => {
     console.error('Error connecting to MongoDB:', err);
-  });
-  
-  // Schedule the cleanup task to run every day at midnight
-  cron.schedule('0 0 * * *', () => {
-    console.log('Running cleanup task...');
-    deleteInactiveGuests();
   });
   
   const generateSecurePassword = (length = 16) => {
@@ -91,7 +83,17 @@ const deleteInactiveGuests = async () => {
   }
 };
 
+// Serve os arquivos estáticos do React
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Rota de fallback para servir o index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port: ${port}`);
+});
 
 app.post('/login-guest', async (req, res) => {
   const { username } = req.body;
