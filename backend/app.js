@@ -1,6 +1,5 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const path = require('path');
 const User = require('./models/User');
 const Ranking = require('./models/Ranking');
 const DailyPuzzle = require('./models/DailyPuzzle');
@@ -23,10 +22,13 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
 app.options('*', cors(corsOptions)); // Preflight requests
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 app.use(cookieParser());
 
 const port = 3000;
@@ -43,12 +45,19 @@ mongoose
     console.error('Error connecting to MongoDB:', err);
   });
   
-  const generateSecurePassword = (length = 16) => {
-    return crypto
-      .randomBytes(length)
-      .toString('hex')
-      .slice(0, length);
-  };
+  // Schedule the cleanup task to run every day at midnight
+  cron.schedule('0 0 * * *', () => {
+    console.log('Running cleanup task...');
+    deleteInactiveGuests();
+  });
+  
+const generateSecurePassword = (length = 16) => {
+  return crypto
+    .randomBytes(length)
+    .toString('hex')
+    .slice(0, length);
+};
+
 const generateAccessToken = (user) => {
   return jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '15m' });
 };
@@ -82,6 +91,11 @@ const deleteInactiveGuests = async () => {
     console.error('Error deleting inactive guest users:', err);
   }
 };
+
+// Serve static files
+app.use(express.static('dist')); 
+
+app.use(express.static('public'));
 
 app.post('/login-guest', async (req, res) => {
   const { username } = req.body;
@@ -547,12 +561,11 @@ app.get('/get-daily', async (req, res) => {
   }
 });
 
-// Serve os arquivos estáticos do React
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Rota de fallback para servir o index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  // Exclude API routes from this catch-all handler
+  if (!req.path.startsWith('/api/')) {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  }
 });
 
 app.listen(port, () => {
