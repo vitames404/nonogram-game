@@ -18,7 +18,7 @@ const app = express();
 const corsOptions = {
   origin: 'https://nonogram404.onrender.com', // Allow the specific origin
   methods: ['GET', 'POST', 'OPTIONS'], // Allowed HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
+  allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"],
   credentials: true, // Allow cookies and credentials
 };
 
