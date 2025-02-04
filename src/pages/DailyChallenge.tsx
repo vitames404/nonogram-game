@@ -131,8 +131,6 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   };
 
   const handleTimerComplete = (timeTaken: number) => {
-    console.log("Time taken (centiseconds):", timeTaken);
-    console.log("Time taken (seconds):", timeTaken / 100);
     setCurrentTime(timeTaken);
   };
 
