@@ -131,11 +131,16 @@ const App: React.FC = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/logout`, {
         method: 'POST',
-        credentials: 'include',
+        credentials: 'include',  // Ensure cookies are included in the request
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
       });
-
+  
       if (response.ok) {
-        window.location.href = "/home";  // Redirect to the login page
+        document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        window.location.href = "/home";  
       } else {
         console.error('Failed to logout');
       }
