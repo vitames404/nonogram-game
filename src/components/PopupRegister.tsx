@@ -71,7 +71,7 @@ const PopupRegister: React.FC<PopupRegisterProps> = ({ onRegisterSuccess }) => {
             <p className="text-[32px]">EMAIL</p>
             <input
               type="email"
-              placeholder="Email"
+              placeholder="Email (Optional)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="p-2 rounded bg-gray-700 text-white"
