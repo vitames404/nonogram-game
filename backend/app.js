@@ -16,7 +16,7 @@ require('dotenv').config();
 const app = express();
 
 const corsOptions = {
-  origin: 'https://nonogram404.onrender.com', // Allow the specific origin
+  origin: ['https://nonogram404.onrender.com', 'http://localhost:5173'], // Allow the specific origin
   methods: ['GET', 'POST', 'OPTIONS'], // Allowed HTTP methods
   allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"],
   credentials: true, // Allow cookies and credentials
@@ -92,11 +92,6 @@ const deleteInactiveGuests = async () => {
     console.error('Error deleting inactive guest users:', err);
   }
 };
-
-// Serve static files
-app.use(express.static('dist')); 
-
-app.use(express.static('public'));
 
 app.post('/login-guest', async (req, res) => {
   const { username } = req.body;
@@ -280,7 +275,13 @@ app.post('/add-ranking', authenticateToken, async (req, res) => {
 app.get('/fetch-ranking', async (req, res) => {
   try {
     const currentDate = new Date().toISOString().split('T')[0]; // Get the current date as a string (e.g., "2023-10-25")
-    const rankings = await Ranking.find({ date: { $gte: new Date(currentDate), $lt: new Date(currentDate + 'T23:59:59.999Z') } }).sort({ time: 1 });
+    
+    const rankings = await Ranking.find({
+      date: { $gte: new Date(currentDate), $lt: new Date(currentDate + 'T23:59:59.999Z') }
+    }).lean(); // Converte para objeto JS puro
+    
+    rankings.sort((a, b) => Number(a.time) - Number(b.time)); // Ordena numericamente
+
     res.status(200).json({ rankings });
   } catch (err) {
     console.error('Error in /fetch-ranking:', err);
@@ -510,7 +511,12 @@ app.post('/create-daily', async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const existingPuzzle = await DailyPuzzle.findOne({ date: today });
-
+    // Reset all users' `alreadyPlayed` to false
+    const updateResult = await User.updateMany({}, { alreadyPlayed: false });
+    console.warn("tentei updatar usuarios")
+    if (updateResult.nModified === 0) {
+      console.warn('No users were updated, but proceeding to create the daily puzzle.');
+    }
     if (existingPuzzle) {
       return res
         .status(400)
@@ -531,7 +537,7 @@ app.post('/create-daily', async (req, res) => {
     await newPuzzle.save();
 
     res.status(201).json({
-      message: 'Daily challenge created successfully',
+      message: 'Daily chal lenge created successfully',
       puzzle: newPuzzle,
     });
   } catch (err) {

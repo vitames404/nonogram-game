@@ -35,31 +35,35 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
   // Fetch the alreadyPlayed status from the backend
   const fetchAlreadyPlayed = async () => {
     try {
+      // Only call fetchDailyChallenge if the user has NOT played yet
+      await fetchDailyChallenge();
+
       const response = await fetch(`${API_BASE_URL}/get-dailyConditions`, {
         credentials: 'include',
       });
-
+  
       if (!response.ok) {
         throw new Error("Failed to fetch alreadyPlayed status.");
       }
-
+  
       const { alreadyPlayed, guest } = await response.json();
       setAlreadyPlayed(alreadyPlayed);
+      
 
+      if (guest) {
+        setError("You can't see this as a guest, create an account :|");
+        setLoading(false);
+        return;
+      }
+  
       if (alreadyPlayed) {
         setError("You can only play once a day >:(");
         setLoading(false);
         return;
       }
+    
+      updateUserPlayed();
 
-      if(guest){
-        setError("You can´t see this as a guest, create an account :|");
-        setLoading(false);
-        return;
-      }
-
-      // If the user hasn't played yet, fetch the daily challenge
-      fetchDailyChallenge();
     } catch (error) {
       console.error("Error in fetchAlreadyPlayed:", error);
       setError(error instanceof Error ? error.message : "An unexpected error occurred.");
@@ -134,7 +138,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
     setCurrentTime(timeTaken);
   };
 
-  const updateUser = async () => {
+  const updateUserPlayed = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/user-played`, {
         method: 'POST',
@@ -176,7 +180,6 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ calculateHints }) => {
     alert("You won the DAILY MODE mode!");
     fetchRanking();
     addRanking();
-    updateUser();
   };
 
   useEffect(() => {
