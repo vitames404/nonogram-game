@@ -5,7 +5,7 @@ This project is a web-based implementation of the **Nonogram puzzle game**. Play
 ![image](https://github.com/user-attachments/assets/5980f207-889b-4f1a-a902-20a7d4a53c7c)
 
 
-*Link*: https://nonogram404.onrender.com/
+**Link**: https://nonogram404.onrender.com/
 
 ---
 
